@@ -79,6 +79,23 @@
         .research-view h1, .research-view h2 { font-weight: 700; }
         .research-view h2 { margin-top: 28px; }
         .research-view a { color: #000; }
+        .research-view h3 { font-size: 16px; line-height: 1.55; margin-top: 24px; font-weight: 700; }
+        .research-view p { margin: 12px 0; }
+        .research-view article > ul { list-style: disc; padding-left: 24px; }
+        .research-view article > ol { list-style: decimal; padding-left: 24px; }
+        .research-view article > ul > li, .research-view article > ol > li { margin: 8px 0; }
+        .research-view nav { border-block: 1px solid #ccc; padding: 12px 0; margin: 24px 0; }
+        .research-view nav ul { display: flex; flex-wrap: wrap; gap: 8px 24px; list-style: none; padding: 0; margin: 8px 0; }
+        .research-view .research-note { border-left: 3px solid #555; padding: 12px 16px; background: #f4f4f4; }
+        .research-view .research-equation { margin: 16px 0; padding: 16px; border: 1px solid #ccc; background: #f8f8f8; }
+        .research-view .research-equation code { display: block; font-size: 15px; line-height: 1.9; white-space: normal; overflow-wrap: anywhere; }
+        .research-view .research-equation figcaption { font-size: 14px; }
+        .research-view [id] { scroll-margin-top: 20px; }
+        .research-view a:focus-visible { outline: 2px solid #155e75; outline-offset: 3px; }
+        @media (max-width: 600px) {
+            .research-view { padding: 20px 16px 40px; }
+            .research-view .research-equation { padding: 12px; }
+        }
         .panel { 
             background: linear-gradient(135deg, rgba(17, 25, 29, .96), rgba(8, 14, 18, .93));
             border: 1px solid var(--line);
@@ -96,7 +113,16 @@
             letter-spacing: .015em;
             text-transform: uppercase;
         }
-        .panel-subtitle { color: var(--muted); font-size: 12px; }
+        .panel-subtitle { color: var(--muted); font-size: 11px; line-height: 1.5; }
+        button { transition: background .16s ease, border-color .16s ease, box-shadow .16s ease; }
+        button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid #94d6ef; outline-offset: 3px; }
+        .panel-title { text-transform: none; letter-spacing: .03em; }
+        .forecast-controls button { min-height: 34px; line-height: 1.3; }
+        .forecast-controls button:hover { background: #264b5d; border-color: #87b9cc; }
+        .data-grid strong { line-height: 1.5; }
+        .timeline-labels { grid-template-columns: repeat(3, 1fr); }
+        .timeline-labels span:nth-child(2) { text-align: center; }
+        .timeline-labels span:last-child { text-align: right; }
         .left-rail, .right-rail { position: absolute; top: 59px; bottom: 13px; width: 282px; pointer-events: auto; }
         .left-rail { left: 12px; }
         .right-rail { right: 12px; width: 238px; }
@@ -114,7 +140,7 @@
         .voice-row { display: flex; align-items: center; gap: 9px; color: #e5ecec; font-size: 12px; }
         .voice-orb { width: 31px; height: 31px; display: grid; place-items: center; border-radius: 50%; color: #e9f8ff; background: radial-gradient(circle at 35% 28%, #8bdcff 0%, #328fd0 42%, #09519d 100%); border: 1px solid #8bdcff; box-shadow: 0 0 12px rgba(50, 143, 208, .65); font-weight: 700; }
         .waveform { flex: 1; height: 24px; opacity: .82; background: repeating-linear-gradient(90deg, transparent 0 3px, #a9c0c7 3px 5px, transparent 5px 9px); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
-        .ai-dispatch-orb { position: absolute; left: 50%; bottom: 24px; z-index: 2; width: 59px; height: 59px; display: grid; place-items: center; transform: translateX(-50%); color: #e9f8ff; background: radial-gradient(circle at 34% 24%, #9ae5ff 0%, #368fd9 35%, #0751a3 72%, #062866 100%); border: 1px solid #77caff; border-radius: 50%; box-shadow: 0 0 0 5px rgba(56, 149, 226, .12), 0 0 24px rgba(42, 145, 239, .72), inset 8px 8px 18px rgba(255,255,255,.2), inset -8px -10px 18px rgba(0, 13, 70, .48); cursor: pointer; font-size: 22px; font-weight: 700; letter-spacing: .02em; transition: transform .2s ease, filter .2s ease; pointer-events: auto; }
+        .ai-dispatch-orb { position: absolute; left: 50%; bottom: 10px; z-index: 2; width: 52px; height: 52px; display: grid; place-items: center; transform: translateX(-50%); color: #e9f8ff; background: radial-gradient(circle at 34% 24%, #9ae5ff 0%, #368fd9 35%, #0751a3 72%, #062866 100%); border: 1px solid #77caff; border-radius: 50%; box-shadow: 0 0 0 5px rgba(56, 149, 226, .12), 0 0 24px rgba(42, 145, 239, .72), inset 8px 8px 18px rgba(255,255,255,.2), inset -8px -10px 18px rgba(0, 13, 70, .48); cursor: pointer; font-size: 22px; font-weight: 700; letter-spacing: .02em; transition: transform .2s ease, filter .2s ease; pointer-events: auto; }
         .ai-dispatch-orb::before { content: ''; position: absolute; inset: -7px; border: 1px solid rgba(112, 201, 232, .38); border-radius: 50%; }
         .ai-dispatch-orb:hover { filter: brightness(1.15); transform: translateX(-50%) scale(1.04); }
         .ai-dispatch-orb span { text-shadow: 0 1px 5px #062866; }
@@ -171,7 +197,7 @@
         .dispatch-examples small { display: block; margin-top: 8px; color: #9fb3c0; }
         #dispatch-response { margin-top: 8px; color: #f0f6fa; }
         .dispatch-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(112, 201, 232, .12), 0 10px 28px rgba(0,0,0,.45); }
-        .dispatch-chat-toggle { position: absolute; left: calc(50% - 48px); bottom: 21px; z-index: 5; width: 25px; height: 25px; display: grid; place-items: center; padding: 0; color: #08234e; background: #b9edff; border: 2px solid #e9fbff; border-radius: 50%; box-shadow: 0 2px 9px rgba(0,0,0,.48), 0 0 10px rgba(112,201,232,.9); cursor: pointer; font-size: 13px; line-height: 1; pointer-events: auto; }
+        .dispatch-chat-toggle { position: absolute; left: calc(50% - 48px); bottom: 12px; z-index: 5; width: 25px; height: 25px; display: grid; place-items: center; padding: 0; color: #08234e; background: #b9edff; border: 2px solid #e9fbff; border-radius: 50%; box-shadow: 0 2px 9px rgba(0,0,0,.48), 0 0 10px rgba(112,201,232,.9); cursor: pointer; font-size: 13px; line-height: 1; pointer-events: auto; }
         .dispatch-chat-toggle:hover { background: #fff; transform: scale(1.08); }
         .responding-unit { padding: 4px 7px; background: #164761; border: 2px solid #8adaff; border-radius: 5px; color: white; font: 600 11px sans-serif; box-shadow: 0 2px 6px #0009; }
         .ai-dispatch-orb[aria-pressed="true"] { outline: 3px solid #a5efff; filter: brightness(1.25); }
@@ -206,6 +232,27 @@
             .map-tools { top: 55px; }
             .map-badge { display: none; }
         }
+        [hidden], .hidden { display: none !important; }
+        #dispatch-chat-toggle { z-index: 30; width: 34px; height: 34px; }
+        #voice-panel { z-index: 13; }
+        .dispatch-panel { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); width: min(410px, calc(100vw - 24px)); max-height: calc(100vh - 150px); overflow: auto; z-index: 12; padding: 14px; background: #10212af5; border: 1px solid #5e8598; border-radius: 14px; box-shadow: 0 12px 48px #0009; pointer-events: auto; animation: panel-enter 180ms ease-out; font-size: 12px; }
+        .dispatch-panel button { cursor: pointer; color: #c8efff; background: #1a3a4b; border: 1px solid #416275; border-radius: 6px; padding: 7px 10px; }
+        .dispatch-panel button:hover { background: #275268; }
+        #dispatch-close { font-size: 20px; line-height: 1; }
+        #dispatch-examples summary { cursor: pointer; color: #a5d6e9; padding: 8px 0; }
+        #dispatch-examples button { display: block; width: 100%; text-align: left; margin: 5px 0; }
+        .dispatch-panel small { display: block; color: #abc0ca; line-height: 1.5; }
+        #dispatch-form { display: flex; gap: 6px; margin: 12px 0; }
+        #dispatch-input { flex: 1; min-width: 0; padding: 10px; border-radius: 6px; border: 1px solid #54747f; color: #fff; background: #091820; font: inherit; }
+        #dispatch-response { line-height: 1.6; user-select: text; }
+        .dispatch-audio { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+        .dispatch-audio button { font-size: 10px; }
+        #dispatch-locations button { width: 100%; margin: 4px 0; text-align: left; }
+        .right-rail { overflow-y: auto; padding-bottom: 56px; }
+        #team-list button { text-align: left; padding: 6px; color: #c8efff; background: #193746; border-radius: 5px; border: 1px solid #426276; }
+        .bottom-status { display: none; }
+        @keyframes panel-enter { from { opacity: 0; margin-bottom: -8px; } to { opacity: 1; margin-bottom: 0; } }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
     </style>
 </head>
 <body class="bg-slate-950 text-white select-none">
@@ -236,6 +283,7 @@
             <div class="top-nav" aria-label="Primary navigation">
                 <button id="nav-map" type="button" aria-selected="true">MAP</button>
                 <button id="nav-research" type="button" aria-selected="false">RESEARCH</button>
+                <a href="./gantt.html" style="color: var(--cyan); font-size: 12px; padding: 8px;">GANTT</a>
             </div>
             <div class="header-note">hackPHS - ‘Into the Skies’</div>
         </header>
@@ -245,9 +293,20 @@
                 <h1>Research summary</h1>
                 <p>This page gathers the research that informs Aero-Hazard / Plume. It describes the incidents we are addressing, what controls airborne transport, how an estimated draft path is produced, how exposure limits should be read, and where a computer model must give way to field measurements and official direction. The page is intentionally text heavy so that a user can understand the assumptions behind the map before using it.</p>
                 <figure>
-                    <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Smoke%20plume%20from%20wildfire.jpg" alt="A visible smoke plume rising and moving downwind" width="640" height="360" loading="lazy">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/67/Smoke_plume_from_SoCal_wildfire_October_2007.jpg" alt="A visible smoke plume rising and moving downwind" width="640" height="360" loading="lazy">
                     <figcaption>A visible plume is shaped by release energy, wind, buoyancy, and atmospheric mixing. Image: Wikimedia Commons.</figcaption>
                 </figure>
+
+                <nav aria-label="Research topics">
+                    <strong>Explore the research</strong>
+                    <ul>
+                        <li><a href="#research-transport">Transport equations</a></li>
+                        <li><a href="#research-turbulence">Turbulence and complex flow</a></li>
+                        <li><a href="#research-fate">Chemical fate and exposure</a></li>
+                        <li><a href="#research-validation">Uncertainty and validation</a></li>
+                        <li><a href="#research-references">Sources and further reading</a></li>
+                    </ul>
+                </nav>
 
                 <h2>Incidents and response problems</h2>
                 <p>Industrial releases, transportation accidents, fires, explosions, and radiological events can put hazardous material into the air before responders know the release rate, source height, chemical behavior, or local wind. The Bhopal gas disaster, the Chernobyl fallout event, and the East Palestine train derailment are different incidents, but they expose the same operational problem: decisions must be made while observations are incomplete and weather conditions are changing.</p>
@@ -268,6 +327,97 @@
                 <p>As the forecast timeline advances, the path can bend when the input weather changes. Terrain and building geometry can influence the displayed flow, but the simulation does not directly measure every corridor, roofline, or indoor ventilation system. A visible plume is therefore an analytical approximation of outdoor transport, not proof that a location is safe or contaminated.</p>
                 <p>The displayed path should be separated into three ideas. Advection is movement carried by the mean wind. Diffusion is the spreading caused by unresolved random motion and turbulence. Deposition or removal represents material leaving the air through settling, chemical reaction, rainout, or other processes. Different chemicals and particle sizes behave differently, so a gas model should not be interpreted as a particulate or fallout model.</p>
 
+                <h2>Trees, buildings, and topography</h2>
+                <p>Surface features change both the speed and direction of near-ground flow. Trees add drag and turbulence: a dense tree line can slow the mean wind, break a smooth plume into eddies, and increase mixing below and behind the canopy. Vegetation can also intercept some particles, but interception is not the same as removing a hazardous gas. A model that does not resolve individual trees should treat wooded areas as a source of additional uncertainty rather than as a guaranteed filter.</p>
+                <p>Buildings create wakes, recirculation zones, and channels. Wind accelerates around corners and through narrow street corridors, while the downwind side of a building can contain slower, rotating air. Roofs and taller structures can lift or divide a plume, and heating or exhaust systems can draw outdoor material indoors. Street-level wind can therefore differ substantially from the weather-station wind used by a regional forecast. Building footprints help describe geometry, but they do not replace measurements of entrances, HVAC intakes, alleys, or indoor pressure.</p>
+                <p>Topography redirects flow on larger scales. Ridges can force air upward, gaps can funnel it, and valleys can guide drainage winds or hold dense gas near low elevations under stable conditions. Slopes can produce upslope flow during daytime heating and downslope flow after nighttime cooling. Hills and terrain can also block a direct path while leaving higher or lower routes open. The displayed terrain-aware path is useful for identifying these possibilities, but its resolution and the available elevation data limit how much detail can be trusted.</p>
+                <p>These effects interact. A plume entering an urban street, forest edge, ravine, or hillside can change shape over tens of meters while the regional wind remains nearly unchanged. This is why the map should be used to select monitoring locations and response priorities, then updated with local observations. For background on atmospheric flow and dispersion modeling, see the <a href="https://www.weather.gov/jetstream/mtn" target="_blank" rel="noreferrer">National Weather Service mountain meteorology resource</a> and the <a href="https://www.epa.gov/scram/air-quality-dispersion-modeling-preferred-and-recommended-models" target="_blank" rel="noreferrer">EPA dispersion-modeling resources</a>.</p>
+
+                <h2 id="research-transport">Transport equations: from a wind path to a concentration field</h2>
+                <p class="research-note"><strong>Implementation boundary.</strong> The current simulator advances finite-mass Gaussian puffs through time-varying winds, sums their concentration fields with a ground-reflection term, and applies simplified spreading and removal rules. Terrain and building adjustments are approximations, not a resolved fluid-dynamics calculation. The equations below explain the model family and more advanced research directions; they do not claim that Aero-Hazard runs AERMOD, HYSPLIT, FLEXPART, RANS, or LES.</p>
+                <p>Unless stated otherwise, equations use SI units: concentration <var>C</var> in kg/m³, distance in m, time <var>t</var> in s, velocity in m/s, and mass in kg. Coordinates <var>x</var>, <var>y</var>, and <var>z</var> denote downwind, crosswind, and height above a flat reference surface. Mathematical operators ∇, ∇·, and ∇² mean gradient, divergence, and Laplacian. Each equation is a simplified teaching form with explicit assumptions, not a complete solver specification.</p>
+
+                <h3>1. Advection–diffusion–reaction: the conservation equation</h3>
+                <figure class="research-equation" aria-label="Advection diffusion reaction equation">
+                    <code>∂C/∂t + ∇·(u C) = ∇·(K ∇C) + S − λ C</code>
+                    <figcaption>Local concentration change + transport by wind = turbulent spreading + emissions − first-order loss.</figcaption>
+                </figure>
+                <p>Here <var>u</var> is the three-dimensional mean velocity, <var>K</var> is an eddy-diffusivity tensor (m²/s), <var>S</var> is a volumetric source (kg/m³/s), and <var>λ</var> is a first-order loss rate (s⁻¹). Direction-dependent diffusivity allows horizontal and vertical mixing to differ. This form assumes a dilute tracer in approximately constant-density air; strongly varying density requires a density-weighted mass-fraction formulation. Initial concentrations, inflow/outflow conditions, and surface fluxes are as important as the equation itself.</p>
+                <p><strong>Research implication:</strong> diffusion redistributes mass; it does not destroy it. In a closed, nonreactive domain with no surface loss, the volume integral of concentration must stay constant after emissions stop. A color disappearing from the map is not evidence that this physical mass has vanished. Particle and grid models are alternative ways to approximate this transport problem. <a href="#ref-flexpart">[8]</a></p>
+
+                <h3>2. Gaussian plumes and time-dependent puffs</h3>
+                <figure class="research-equation" aria-label="Steady Gaussian plume equation">
+                    <code>C(x,y,z) = Q / (2π U σ<sub>y</sub> σ<sub>z</sub>) · exp[−y²/(2σ<sub>y</sub>²)]<br>· {exp[−(z−H)²/(2σ<sub>z</sub>²)] + exp[−(z+H)²/(2σ<sub>z</sub>²)]}</code>
+                    <figcaption>Steady, continuous release over an ideal reflecting ground, for x &gt; 0 and wind speed U &gt; 0.</figcaption>
+                </figure>
+                <p><var>Q</var> is the release rate (kg/s), <var>U</var> is a constant along-wind speed, <var>H</var> is effective release height, and <var>σ<sub>y</sub></var>, <var>σ<sub>z</sub></var> are downwind-dependent spread lengths. The reflected image source at −<var>H</var> enforces zero flux through flat ground in this idealization. It does not represent deposition. Constant wind, a passive dilute tracer, and steady emissions make this a useful baseline, but not a street-canyon, dense-gas, or calm-wind solution.</p>
+                <figure class="research-equation" aria-label="Reflected Gaussian puff equation">
+                    <code>C<sub>p</sub>(x,y,z,t) = M<sub>p</sub>(t) / [(2π)<sup>3/2</sup> σ<sub>x</sub> σ<sub>y</sub> σ<sub>z</sub>]<br>· exp{−½[(x−x<sub>p</sub>)²/σ<sub>x</sub>² + (y−y<sub>p</sub>)²/σ<sub>y</sub>²]}<br>· {exp[−(z−H<sub>p</sub>)²/(2σ<sub>z</sub>²)] + exp[−(z+H<sub>p</sub>)²/(2σ<sub>z</sub>²)]}<br>C<sub>total</sub> = ∑<sub>p</sub> C<sub>p</sub>, &nbsp; dx<sub>p</sub>/dt = u(x<sub>p</sub>,t)</code>
+                    <figcaption>Each puff carries mass M<sub>p</sub>; its center follows the wind, its widths grow, and overlapping concentrations add.</figcaption>
+                </figure>
+                <p>The vector <var>x<sub>p</sub></var> denotes a puff center; <var>x<sub>p</sub></var>, <var>y<sub>p</sub></var>, and <var>H<sub>p</sub></var> are its coordinate components. For constant homogeneous diffusivity, σ<sub>i</sub>²(t) = σ<sub>i,0</sub>² + 2K<sub>i</sub>t in each direction <var>i</var>. The simulator instead uses parameterized, stability-dependent spreading with a finite initial size and age-dependent broadening. Its simplified loss factors reduce retained puff mass rather than resolving surface exchange. A sequence of puffs can retain the history of a wind shift, unlike a single steady plume. At zero wind, the steady formula divides by zero; a finite-width puff can still spread.</p>
+                <p>EPA describes <strong>AERMOD</strong> as a steady-state plume model using boundary-layer turbulence and terrain treatments; it is more sophisticated than this elementary Gaussian equation. NOAA's <strong>HYSPLIT</strong> is a separate transport and dispersion system, not simply a line joining wind arrows. Neither system's published validation transfers automatically to this prototype. <a href="#ref-epa-models">[6]</a> <a href="#ref-hysplit">[9]</a></p>
+
+                <h3>3. Lagrangian stochastic particle transport</h3>
+                <figure class="research-equation" aria-label="Simplified stochastic particle equations">
+                    <code>dX = U(X,t) dt + √(2K) dW<br>Var[ΔX − U Δt] = 2K Δt</code>
+                    <figcaption>A simplified one-coordinate random walk for constant, homogeneous diffusivity K; dW is a Wiener increment with variance dt.</figcaption>
+                </figure>
+                <p>A numerical particle is a mass-carrying sample, not necessarily one physical aerosol. Thousands of trajectories can reconstruct a concentration distribution under evolving winds. The square-root time scaling is essential: doubling a time step must not double the random displacement amplitude. Spatially varying diffusivity requires a consistent drift correction and boundary treatment; blindly substituting K(X) in this equation can create artificial accumulation.</p>
+                <p><strong>FLEXPART v10.4</strong> uses stochastic velocity equations and well-mixed criteria rather than only this elementary displacement rule. Pisso et al. describe treatments for convective turbulence, density gradients, wet and dry deposition, gravitational settling, and chemical loss. This makes it a useful reference for a future particle engine, with increased meteorological-input and validation requirements. <a href="#ref-flexpart">[8]</a></p>
+
+                <h2 id="research-turbulence">Complex flow: turbulence, stability, and density effects</h2>
+                <h3>4. RANS and LES for building-resolved flow</h3>
+                <figure class="research-equation" aria-label="Incompressible Reynolds averaged momentum equation">
+                    <code>∇·U = 0<br>∂U/∂t + (U·∇)U = −∇p̄/ρ<sub>0</sub> + ν∇²U − ∇·R + b<br>R<sub>ij</sub> = ⟨u′<sub>i</sub>u′<sub>j</sub>⟩</code>
+                    <figcaption>Incompressible Reynolds-averaged momentum balance: mean wind responds to pressure, viscosity, unresolved turbulent momentum transport, and body acceleration.</figcaption>
+                </figure>
+                <p><var>U</var> is mean velocity, <var>p̄</var> mean pressure, <var>ρ<sub>0</sub></var> reference air density, <var>ν</var> kinematic viscosity (m²/s), <var>b</var> body acceleration (m/s²), and <var>R</var> the velocity-covariance tensor. Primes denote velocity fluctuations and angle brackets an ensemble average. The extra covariance is unknown: a <strong>closure</strong> such as k–ε or k–ω estimates its effect. RANS can estimate mean building wakes at lower cost, but does not resolve individual gusts. <a href="#ref-rans">[10]</a></p>
+                <p><strong>Large-eddy simulation (LES)</strong> spatially filters the flow, resolves larger turbulent eddies, and models subgrid stresses. It can describe unsteady street-canyon recirculation more explicitly, but demands fine geometry, small time steps, suitable turbulent inflow, and substantial computing resources. Both approaches require a separate scalar-transport calculation to turn wind into contaminant concentration. Building footprints alone do not provide a validated CFD wind field. <a href="#ref-les">[11]</a></p>
+
+                <h3>5. Surface-layer shear and atmospheric stability</h3>
+                <figure class="research-equation" aria-label="Monin Obukhov surface layer wind profile">
+                    <code>U(z) = (u<sub>*</sub>/κ) {ln[(z−d)/z<sub>0</sub>] − ψ<sub>m</sub>[(z−d)/L] + ψ<sub>m</sub>(z<sub>0</sub>/L)}<br>L = −u<sub>*</sub>³ θ̄<sub>v</sub> / [κ g ⟨w′θ′<sub>v</sub>⟩]</code>
+                    <figcaption>Monin–Obukhov similarity connects near-surface wind shear to roughness and buoyancy under approximately stationary, horizontally homogeneous conditions.</figcaption>
+                </figure>
+                <p><var>u<sub>*</sub></var> is friction velocity, <var>κ</var> ≈ 0.4 is the von Kármán constant, <var>d</var> displacement height, <var>z<sub>0</sub></var> roughness length, and <var>ψ<sub>m</sub></var> a dimensionless stability correction. <var>θ̄<sub>v</sub></var> is mean virtual potential temperature (K), <var>g</var> gravity, and ⟨w′θ′<sub>v</sub>⟩ the upward turbulent virtual-potential-temperature flux (K·m/s). Positive <var>L</var> indicates stable stratification; negative <var>L</var> indicates unstable stratification. In the neutral limit, the correction tends to zero and the logarithmic wind profile remains. This profile applies above the roughness elements, not inside individual building wakes or arbitrary forest canopies. EPA's AERMOD documentation provides the boundary-layer modeling context. <a href="#ref-epa-models">[6]</a></p>
+
+                <h3>6. Dense-gas gravity spreading and buoyant releases</h3>
+                <figure class="research-equation" aria-label="Dense gas reduced gravity and Froude number">
+                    <code>g′ = g(ρ<sub>c</sub> − ρ<sub>a</sub>)/ρ<sub>a</sub><br>Fr = U / √(g′ h), &nbsp; Ri<sub>b</sub> = g′ h / U² = Fr<sup>−2</sup></code>
+                    <figcaption>Idealized bulk density-current scaling for a cloud denser than air, with modest density contrast and nonzero reference wind U.</figcaption>
+                </figure>
+                <p><var>ρ<sub>c</sub></var> is cloud-mixture density, <var>ρ<sub>a</sub></var> ambient air density, <var>h</var> cloud depth, and <var>g′</var> reduced gravity. Small <var>Fr</var> (large bulk <var>Ri<sub>b</sub></var>) indicates gravity spreading is important relative to the reference wind; this is a regime diagnostic, not a universal transition threshold or a trajectory prediction. Dilution and entrainment change both density and depth. Pure-substance molecular weight alone does not determine cloud density: temperature, composition, aerosols, and phase changes matter.</p>
+                <p>Large density contrasts require variable-density treatment beyond this approximation. Hot plumes instead gain positive buoyancy and may rise into different winds. A passive Gaussian model should not be assumed to reproduce either slumping dense-gas fronts or a pressurized jet near its source. NOAA's ALOHA technical documentation discusses separate Gaussian and heavy-gas approaches and their assumptions. <a href="#ref-aloha-technical">[12]</a></p>
+
+                <h2 id="research-fate">Chemical fate, deposition, and time-integrated exposure</h2>
+                <figure class="research-equation" aria-label="First order loss and dry deposition equations">
+                    <code>dM/dt = −λM, &nbsp; M(t) = M<sub>0</sub> exp(−λt), &nbsp; λ = ln(2)/t<sub>½</sub><br>F<sub>d</sub> = v<sub>d</sub> C<sub>s</sub></code>
+                    <figcaption>Constant first-order loss and a downward dry-deposition flux. Deposition transfers material out of the air; it does not make the receiving surface harmless.</figcaption>
+                </figure>
+                <p><var>t<sub>½</sub></var> is a process-specific half-life in seconds, <var>F<sub>d</sub></var> a downward mass flux (kg/m²/s), <var>v<sub>d</sub></var> deposition velocity (m/s), and <var>C<sub>s</sub></var> concentration at the chosen near-surface reference height. Radioactive decay, chemical transformation, wet scavenging, and surface deposition are different processes. Daughter products or reaction products can remain hazardous. A single constant loss rate cannot represent arbitrary chemistry, reversible adsorption, or rain removal for every gas and particle size. <a href="#ref-flexpart">[8]</a></p>
+                <figure class="research-equation" aria-label="Exposure integral and averaging equations">
+                    <code>E = ∫<sub>0</sub><sup>T</sup> C(x(t),t) dt, &nbsp; C̄<sub>T</sub> = E/T<br>m<sub>inhaled</sub> = ∫<sub>0</sub><sup>T</sup> C(x(t),t) q<sub>b</sub>(t) dt</code>
+                    <figcaption>Concentration-time exposure E has units kg·s/m³; breathing rate q<sub>b</sub> in m³/s converts it into inhaled mass, not absorbed dose or a health outcome.</figcaption>
+                </figure>
+                <p>The path <var>x(t)</var> follows a receptor and <var>T</var> is exposure duration. These expressions do not account for respirator performance, indoor penetration, uptake, or individual susceptibility. AEGLs are chemical- and duration-specific emergency guidelines with published durations of 10 minutes, 30 minutes, 1 hour, 4 hours, and 8 hours. A time average or a fixed concentration-times-time rule is not a universal way to translate between durations or severity tiers. Below AEGL-1 is not a guarantee of no effects. <a href="#ref-aegl-background">[13]</a></p>
+                <p>For an ideal gas at 25°C and 1 atmosphere, mg/m³ = ppm × molecular weight (g/mol) / 24.45. Other conditions require temperature/pressure correction. Do not apply gas ppm conversion to an aerosol mass field or interpret an airborne radioactive mass concentration as a radiation dose. A two-dimensional mass-per-area field also needs a justified vertical distribution before it becomes mass per volume. <a href="#ref-niosh-units">[14]</a></p>
+
+                <h2 id="research-validation">Uncertainty, numerical checks, and a research roadmap</h2>
+                <figure class="research-equation" aria-label="Ensemble threshold exceedance fraction">
+                    <code>f<sub>exceed</sub>(x,t) = (1/N) ∑<sub>n=1</sub><sup>N</sup> 𝟙[C<sub>n</sub>(x,t) &gt; C<sub>threshold</sub>]</code>
+                    <figcaption>The fraction of N scenarios exceeding a selected concentration threshold at a given location and time; 𝟙 is one when the condition is true and zero otherwise.</figcaption>
+                </figure>
+                <p>Vary source strength, release timing, wind direction and speed, mixing, and removal assumptions together where they are physically related. An ensemble can reveal which monitoring priorities persist across plausible inputs. Its exceedance fraction is <strong>not a calibrated probability</strong> unless the members, weights, input distributions, and forecast reliability justify that interpretation. Instantaneous exceedance also does not establish exposure for an AEGL duration. This is a proposed analysis workflow, not an existing probability layer.</p>
+                <ul>
+                    <li><strong>Conservation:</strong> check emitted mass against airborne inventory, deposited inventory, accounted transformations, and net boundary export. Keep renderer opacity and display culling separate from physical mass accounting.</li>
+                    <li><strong>Analytical benchmarks:</strong> test constant-wind translation, diffusion with variance growth 2Kt, reflected-puff normalization, and exponential loss before adding terrain or chemistry.</li>
+                    <li><strong>Convergence:</strong> reduce time steps and grid spacing or increase particle counts; compare concentrations and contours, not just animation smoothness. For a one-dimensional explicit upwind advection scheme, UΔt/Δx ≤ 1 is a stability condition; for explicit centered diffusion, KΔt/Δx² ≤ ½. Combined, multidimensional, and other schemes have different restrictions.</li>
+                    <li><strong>Observational validation:</strong> compare independent tracer measurements at matching locations, heights, units, and averaging periods. Report bias, error, arrival-time error, and missed exceedances; hold back measurements used for calibration. Include calm conditions, wind shifts, and near-source cases rather than validating only favorable weather.</li>
+                    <li><strong>Model selection:</strong> use simple analytical cases for baseline checks, time-dependent puffs or particles for changing winds, and validated building-resolved CFD only when geometry, boundary conditions, and resources support it. More equations do not compensate for an unknown source or inaccurate weather.</li>
+                </ul>
+                <p><strong>Next research steps:</strong> establish conservation and convergence benchmarks, quantify sensitivity to uncertain weather and emissions, validate against independent tracer data, and only then evaluate stochastic turbulence, improved deposition, or an offline CFD coupling. Report both accuracy and runtime so that increased physical detail is justified by measured improvement.</p>
+
                 <h2>Source characterization and chemical behavior</h2>
                 <p>The release rate, total mass, release duration, temperature, pressure, density, buoyancy, and source height all affect the result. A short, high-mass release creates a moving puff; a continuing leak creates a plume that is replenished while the leak continues. A warm buoyant release can rise before it is carried downwind. A dense gas can remain close to the surface or collect in low areas under suitable conditions. The same weather can produce very different paths for different materials.</p>
                 <p>When the source is uncertain, it is safer to compare multiple scenarios rather than select a single precise number. Test a low, central, and high release estimate; vary wind direction and speed; and inspect whether the priority area stays the same. Stable conclusions across those scenarios are more useful than a detailed-looking single run.</p>
@@ -285,21 +435,38 @@
                 <p>ALOHA and similar dispersion tools document important limitations: predictions become less reliable when the release description or weather inputs are uncertain, complex terrain and buildings are difficult to resolve, and indoor exposure requires a separate ventilation model. Aero-Hazard inherits these limitations. The output is intended to support questions such as where to collect measurements, which areas may need attention first, and how a changing wind could alter priorities.</p>
                 <p>The simulation does not calculate individual dose, guarantee evacuation boundaries, predict every indoor concentration, or certify that an uncolored area is safe. It also cannot know whether a chemical has reacted, pooled, ignited, or been removed by rain unless those processes are explicitly represented. Treat missing data as uncertainty rather than as evidence of no hazard.</p>
 
-                <h2>Research references</h2>
-                <p><a href="https://response.restoration.noaa.gov/oil-and-chemical-spills/chemical-spills/response-tools/alohas-limitations.html" target="_blank" rel="noreferrer">NOAA ALOHA limitations</a> explains why atmospheric dispersion results depend on source and weather assumptions. <a href="https://www.cdc.gov/niosh/npg/" target="_blank" rel="noreferrer">CDC/NIOSH Pocket Guide</a> provides substance-specific hazards and exposure guidance. <a href="https://www.epa.gov/aegl/access-acute-exposure-guideline-levels-aegls-values" target="_blank" rel="noreferrer">EPA AEGL values</a> provides public emergency exposure guidance. <a href="https://www.weather.gov/" target="_blank" rel="noreferrer">National Weather Service</a> provides observations, forecasts, warnings, and meteorological education. <a href="https://www.ready.gov/chemical" target="_blank" rel="noreferrer">Ready.gov chemical emergencies</a> provides public protective-action guidance. These references should be checked for current values and incident-specific direction.</p>
+                <h2 id="research-references">Research references and citations</h2>
+                <p>Official model documentation, peer-reviewed research, and CFD background reading. Advanced equations above are simplified explanatory forms; consult each model's technical documentation for its full numerical and physical formulation.</p>
+                <ol>
+                    <li><a href="https://response.restoration.noaa.gov/oil-and-chemical-spills/chemical-spills/response-tools/alohas-limitations.html" target="_blank" rel="noreferrer">NOAA, ALOHA's Limitations</a>. Describes how uncertain source data, weather, terrain, buildings, and indoor conditions limit dispersion predictions.</li>
+                    <li><a href="https://www.cdc.gov/niosh/npg/" target="_blank" rel="noreferrer">CDC/NIOSH, Pocket Guide to Chemical Hazards</a>. Provides substance-specific hazards, symptoms, protective recommendations, and exposure limits.</li>
+                    <li><a href="https://www.epa.gov/aegl/access-acute-exposure-guideline-levels-aegls-values" target="_blank" rel="noreferrer">U.S. EPA, Acute Exposure Guideline Levels</a>. Provides emergency exposure values and explains AEGL severity tiers.</li>
+                    <li><a href="https://www.weather.gov/" target="_blank" rel="noreferrer">National Weather Service</a>. Provides observations, forecasts, warnings, and meteorological education used to understand wind and stability.</li>
+                    <li><a href="https://www.weather.gov/jetstream/mtn" target="_blank" rel="noreferrer">National Weather Service, Mountain Meteorology</a>. Explains terrain-driven flow, mountain waves, channeling, and other topographic effects.</li>
+                    <li id="ref-epa-models"><a href="https://www.epa.gov/scram/air-quality-dispersion-modeling-preferred-and-recommended-models" target="_blank" rel="noreferrer">U.S. EPA, Air Quality Dispersion Modeling</a>. AERMOD's steady-state framework, boundary-layer scaling, terrain treatment, and linked model formulation documents.</li>
+                    <li><a href="https://www.ready.gov/chemical" target="_blank" rel="noreferrer">Ready.gov, Chemical Emergencies</a>. Provides public protective-action guidance for real incidents.</li>
+                    <li id="ref-flexpart"><a href="https://gmd.copernicus.org/articles/12/4955/2019/" target="_blank" rel="noreferrer">Pisso et al. (2019), The Lagrangian particle dispersion model FLEXPART version 10.4</a>. <cite>Geoscientific Model Development</cite>, 12, 4955–4997. DOI: 10.5194/gmd-12-4955-2019. Peer-reviewed treatment of stochastic transport, convective turbulence, deposition, settling, and chemical loss.</li>
+                    <li id="ref-hysplit"><a href="https://www.ready.noaa.gov/HYSPLIT.php" target="_blank" rel="noreferrer">NOAA Air Resources Laboratory, HYSPLIT</a>. Official access to the Hybrid Single-Particle Lagrangian Integrated Trajectory model, tutorials, and transport/dispersion resources.</li>
+                    <li id="ref-rans"><a href="https://doc.cfd.direct/notes/cfd-general-principles/reynolds-averaged-simulation" target="_blank" rel="noreferrer">CFD Direct, Reynolds-averaged simulation</a>. Derivation of the mean-flow equations, velocity decomposition, and the Reynolds-stress closure problem.</li>
+                    <li id="ref-les"><a href="https://doc.cfd.direct/notes/cfd-general-principles/the-cost-of-simulating-turbulence" target="_blank" rel="noreferrer">CFD Direct, The cost of simulating turbulence</a>. Explains DNS resolution costs, LES resolved and modeled scales, and transient computational requirements.</li>
+                    <li id="ref-aloha-technical"><a href="https://response.restoration.noaa.gov/oil-and-chemical-spills/chemical-spills/resources/aloha-technical-resources.html" target="_blank" rel="noreferrer">NOAA, ALOHA Technical Resources</a>. Links to technical documentation for source strength, neutrally buoyant and heavy-gas dispersion, fires, and explosions.</li>
+                    <li id="ref-aegl-background"><a href="https://www.epa.gov/aegl/about-acute-exposure-guideline-levels-aegls" target="_blank" rel="noreferrer">U.S. EPA, About Acute Exposure Guideline Levels</a>. Defines exposure durations, severity tiers, susceptible populations, and the limits of interpreting values as safety guarantees.</li>
+                    <li id="ref-niosh-units"><a href="https://www.cdc.gov/niosh/npg/pgintrod.html" target="_blank" rel="noreferrer">CDC/NIOSH, Pocket Guide Introduction</a>. Explains exposure-limit terminology and gas/vapor ppm-to-mg/m³ conversion at 25°C and 1 atmosphere.</li>
+                </ol>
+                <p>These citations support the research summary and the model assumptions; they do not validate a particular simulated incident. Always check the current source documents and incident-specific instructions before making an operational decision.</p>
             </article>
         </section>
 
         <main class="left-rail">
             <section class="panel left-card situation-card">
-                <div class="panel-title">SITUATION OVERVIEW</div>
+                <div class="panel-title">Incident overview</div>
                 <div class="data-grid"><span>Source:</span><strong id="source-name">Princeton Middle School</strong><span>Chemical:</span><strong id="hazard-name">Loading hazard</strong><span>Amount:</span><strong id="release-amount">Loading release</strong><span>Wind:</span><strong id="wind-summary">LIVE · refreshing 5 min</strong></div>
                 <details class="release-controls"><summary>Release &amp; gas controls</summary>
                     <form id="release-form">
                         <label>Gas / hazard<select id="release-hazard" aria-label="Gas or hazard"><option value="">Current hazard</option></select></label>
                         <label>Release mode<select id="release-mode" aria-label="Release mode"><option value="CONTINUOUS">Constant leak</option><option value="IMPULSIVE">Instant release / explosion</option><option value="CONTINUOUS_THEN_IMPULSIVE">Leak then explosion</option></select></label>
                         <div class="release-grid"><label>Leak rate (kg/s)<input id="release-rate" type="number" min="0" max="1000" step="any" value="0.00555556" required></label><label>Duration (min)<input id="release-duration" type="number" min="1" max="240" step="1" value="30" required></label><label>Burst mass (kg)<input id="release-impulse" type="number" min="0" max="100000" step="any" value="10" required></label><label>Burst at T+ (min)<input id="release-time" type="number" min="0" max="120" step="1" value="0" required></label></div>
-                        <div class="forecast-controls"><button type="submit">APPLY SIMULATION</button></div><span id="release-feedback" class="model-note">Mass and rate affect modeled concentration. Explosion represents a gas release, not blast damage.</span>
+                        <div class="forecast-controls"><button type="submit">Apply changes</button></div><span id="release-feedback" class="model-note">Mass and rate affect modeled concentration. Explosion represents a gas release, not blast damage.</span>
                     </form>
                 </details>
                 <label class="command-label" for="search-input">Map search</label>
@@ -310,11 +477,11 @@
             </section>
 
             <section class="panel left-card metrics-layout">
-                <div><div class="panel-title">HAZARD METRICS</div><div class="metric-list"><span>Affected Area: <strong id="affected-area">— sq km</strong></span><span>Pop. At Risk: <strong id="population-at-risk">—</strong></span><span>Peak Conc.: <strong id="peak-concentration">— ppm</strong></span></div></div>
+                <div><div class="panel-title">Modeled conditions</div><div class="metric-list"><span>Affected Area: <strong id="affected-area">— sq km</strong></span><span>Pop. At Risk: <strong id="population-at-risk">—</strong></span><span>Peak Conc.: <strong id="peak-concentration">— ppm</strong></span></div></div>
                 <div class="legend"><div><b class="red">IDLH</b><span id="legend-red-value">Loading</span></div><div><b class="yellow">PEL</b><span id="legend-yellow-value">Loading</span></div><div><b class="cyan">TRACE</b><span id="legend-blue-value">Loading</span></div></div>
             </section>
 
-            <section class="panel left-card"><div class="panel-title">SIMULATION / NOT FIELD GUIDANCE</div><div class="model-note">Estimated transport, not a validated emergency forecast. Colors use hazard thresholds; sphere sizes are enlarged for visibility. Population estimates require population data. Follow qualified responders and official alerts.</div></section>
+            <section class="panel left-card"><div class="panel-title">Planning aid, not field guidance</div><div class="model-note">Estimated transport, not a validated emergency forecast. Colors use hazard thresholds; Cloud surfaces illustrate modeled transport, not measured boundaries. Population estimates require population data. Follow qualified responders and official alerts.</div></section>
         </main>
 
         
@@ -325,15 +492,30 @@
         </div>
 
         <aside class="right-rail">
-            <section class="panel right-card timeline-card"><div class="panel-title"><span>TIMELINE SCRUBBER</span><span id="timeline-current" class="panel-subtitle">T+30 min</span></div><div class="timeline-labels"><span>T+0</span><span>T+30</span><span>T+60</span></div><input id="timeline-slider" class="scrubber" type="range" min="0" max="120" step="5" value="30" aria-label="Plume timeline in minutes"><div class="forecast-controls"><button id="forecast-play" type="button" aria-pressed="false">▶ PLAY 2 HOURS</button><button id="forecast-restart" type="button" title="Restart forecast from T+0">↺</button><button id="forecast-video" type="button" title="Record the two-hour forecast and download a WebM video">VIDEO ↓</button></div><span id="forecast-status" class="panel-subtitle">5-minute steps · stops at T+120</span><div class="forecast-controls"><button id="view-plume" type="button" aria-pressed="true">3D CLOUD</button><button id="view-exposure" type="button" aria-pressed="false">2H EXPOSURE</button></div><div id="exposure-summary" class="model-note" hidden></div><div id="export-controls" class="forecast-controls" hidden><button id="export-csv" type="button">CSV LIST</button><button id="export-png" type="button">PNG MAP</button><button id="export-jpg" type="button">JPG MAP</button></div></section>
-            <section class="panel right-card"><div class="panel-title">FIELD CONTEXT</div><div class="context-lines"><span id="weather-context">Fetching current weather...</span><span id="weather-detail">Provider weather refreshes every five minutes.</span><span class="model-note">Terrain / building wind paths are approximate, not measured street-level winds.</span></div></section>
-            <section class="panel right-card affected-card"><div class="panel-title"><span>AFFECTED PROPERTIES</span><button id="affected-toggle" class="affected-toggle" type="button" aria-expanded="true">HIDE</button></div><div id="affected-list" class="affected-list"><span>Loading property exposure…</span></div></section>
+            <section class="panel right-card timeline-card"><div class="panel-title"><span>Forecast timeline</span><span id="timeline-current" class="panel-subtitle">T+30 min</span></div><div class="timeline-labels"><span>T+0</span><span>T+60</span><span>T+120</span></div><input id="timeline-slider" class="scrubber" type="range" min="0" max="120" step="5" value="30" aria-label="Plume timeline in minutes"><div class="forecast-controls"><button id="forecast-play" type="button" aria-pressed="false">▶ PLAY 2 HOURS</button><button id="forecast-restart" type="button" title="Restart forecast from T+0">↺</button><button id="forecast-video" type="button" title="Record the two-hour forecast and download a WebM video">VIDEO ↓</button></div><label class="panel-subtitle"><input id="forecast-follow" type="checkbox" checked> Follow forecast cloud</label><span id="forecast-status" class="panel-subtitle">5-minute steps · stops at T+120</span><div class="forecast-controls"><button id="view-plume" type="button" aria-pressed="true">Cloud view</button><button id="view-exposure" type="button" aria-pressed="false">2h exposure</button></div><div id="exposure-summary" class="model-note" hidden></div><div id="export-controls" class="forecast-controls" hidden><button id="export-csv" type="button">CSV list</button><button id="export-png" type="button">PNG map</button><button id="export-jpg" type="button">JPG map</button></div></section>
+            <section class="panel right-card"><div class="panel-title">Weather & surroundings</div><div class="context-lines"><span id="weather-context">Fetching current weather...</span><span id="weather-detail">Provider weather refreshes every five minutes.</span><span class="model-note">Terrain / building wind paths are approximate, not measured street-level winds.</span></div></section>
+            <section class="panel right-card"><div class="panel-title">Responding teams</div><div id="team-list" class="affected-list">No teams yet. Use dispatch to add one.</div></section>
+            <section class="panel right-card affected-card"><div class="panel-title"><span>Property exposure</span><button id="affected-toggle" class="affected-toggle" type="button" aria-expanded="true">HIDE</button></div><div id="affected-list" class="affected-list"><span>Loading property exposure…</span></div></section>
         </aside>
 
         <button id="ai-dispatch-orb" class="ai-dispatch-orb" type="button" aria-label="Start voice dispatch" title="Voice dispatch"></button>
         <button id="dispatch-chat-toggle" class="dispatch-chat-toggle" type="button" aria-label="Open dispatch message" aria-expanded="false" title="Open dispatch message"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h16v12H9l-5 4V4Z"/><path d="M8 8h8M8 12h5"/></svg></button>
-        <input id="dispatch-input" class="dispatch-input hidden" aria-label="Describe situation or updates" placeholder="Describe the incident or deploy a team…">
-        <section id="dispatch-examples" class="dispatch-examples" hidden><strong>EXAMPLE COMMANDS</strong><button type="button" data-command="The gas pipe just exploded">The gas pipe just exploded</button><button type="button" data-command="Set total release to 25 kg">Set total release to 25 kg</button><button type="button" data-command="Deploy Hazmat 1 to source">Deploy Hazmat 1 to source</button><button type="button" data-command="Deploy Engine 4 at 40.361, -74.655">Deploy Engine 4 at coordinates</button><button type="button" data-command="Assign [property name] to Hazmat 1">Assign a home to Hazmat 1</button><small>Street intersections need a city and a confirmed map position. Explosion mass must be specified or configured; no mass is guessed.</small><p id="dispatch-response" role="status"></p></section>
+        <section id="voice-panel" class="dispatch-panel" aria-label="Microphone input" hidden><p id="voice-status" role="status"></p><button id="voice-record" type="button">Record audio instead</button><button id="voice-cancel" type="button">Cancel microphone</button></section>
+        <section id="dispatch-panel" class="dispatch-panel" aria-label="Simulation dispatcher" hidden>
+            <header class="dispatch-head"><strong>SIMULATION DISPATCHER</strong><button id="dispatch-close" type="button" aria-label="Close dispatcher">Close ?</button></header>
+            <details id="dispatch-examples" open><summary>Example commands</summary>
+                <button type="button" data-command="The gas pipe just exploded">The gas pipe just exploded</button>
+                <button type="button" data-command="Wind is now from the southwest">Wind is now from the southwest</button>
+                <button type="button" data-command="Deploy Hazmat 1 to source; teamType: fire and hazmat; task: assist residents">Deploy fire + Hazmat 1 to source</button>
+                <button type="button" data-command="I have a fire team with hazmat responding on 5th Ave and Broadway, New York">Fire + hazmat at an intersection</button>
+                <button type="button" data-command="Assign 3 nearby homes to Hazmat 1">Assign 3 nearby homes to Hazmat 1</button>
+                <small>Confirm a map result for named places; add the city. Assignments use loaded residential footprints only, not verified occupancy or safe routes.</small>
+            </details>
+            <div id="dispatch-locations" aria-live="polite"></div>
+            <p id="dispatch-response" role="status">Describe a change. Estimates and team assignments are simulation only.</p>
+            <form id="dispatch-form"><label for="dispatch-input" class="sr-only">Describe situation or updates</label><input id="dispatch-input" autocomplete="off" maxlength="1000" placeholder="Describe the incident or deploy a team?" required><button id="dispatch-send" type="submit">Send ?</button></form>
+            <div class="dispatch-audio"><label><input id="dispatch-speak" type="checkbox" checked> Read replies aloud</label><button id="dispatch-replay" type="button">Replay / unlock audio</button></div><small id="dispatch-audio-status" role="status"></small>
+        </section>
         <span id="plume-mode" class="sr-only">3D plume</span>
         <div id="map-badge" class="map-badge" title="Arrow shows transport direction; compass label is wind FROM"><span id="wind-label">Fetching wind</span><span id="wind-arrow" aria-hidden="true">↑</span></div>
         <div id="toast" class="opacity-0 transition-opacity duration-300"><span id="toast-text">Initializing 3D Elevation Terrain...</span></div>

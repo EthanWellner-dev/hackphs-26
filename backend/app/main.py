@@ -11,7 +11,7 @@ from typing import Literal
 
 import numpy as np
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field, model_validator
 from app.services.agent import process_dispatch
 from app.services.context import BuildingFootprint, ContextSnapshot, ContextFeature, WeatherSample, demo_context, get_live_context
 from app.services.map_guard import acquire_map_session
-from app.services.voice import synthesize_dispatch
+from app.services.voice import VoiceResult, synthesize_dispatch
 from app.services.units import Unit, apply_property_assignment, apply_unit_deployment
 
 
@@ -310,7 +310,19 @@ class PlumeFrame(BaseModel):
     assumptions: list[str]
 
 
+class VoiceRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=1000)
+
+
+class VoiceResponse(BaseModel):
+    status: str
+    cacheKey: str
+    audioUrl: str | None
+    provider: str
+
+
 class DispatchRequest(BaseModel):
+    includeAudio: bool = True
     timeMinutes: int = Field(default=30, ge=0, le=120)
     text: str = Field(min_length=1, max_length=1000)
     scenario: Scenario
@@ -997,6 +1009,28 @@ def post_exposure(update: ScenarioPatch) -> ExposureResponse:
     return _cached_exposure(update.model_dump_json()).model_copy(deep=True)
 
 
+@app.post("/api/transcribe")
+async def transcribe_audio(request: Request) -> dict[str, str]:
+    from starlette.concurrency import run_in_threadpool
+    from app.services.voice import transcribe_recording
+
+    content_type = request.headers.get("content-type", "").split(";")[0]
+    if content_type not in {"audio/webm", "audio/ogg", "audio/mp4", "audio/wav", "video/webm"}:
+        raise HTTPException(status_code=415, detail="Unsupported recording format.")
+    chunks = bytearray()
+    async for chunk in request.stream():
+        chunks.extend(chunk)
+        if len(chunks) > 5 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail="Recording too large. Keep it under 30 seconds.")
+    if not chunks:
+        raise HTTPException(status_code=422, detail="No audio recorded.")
+    try:
+        text = await run_in_threadpool(transcribe_recording, bytes(chunks), content_type)
+        return {"text": text}
+    except RuntimeError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+
 @app.get("/api/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "service": "aero-hazard-demo"}
@@ -1095,6 +1129,12 @@ def update_scenario(update: ManualScenarioUpdate) -> Scenario:
     return scenario
 
 
+@app.post("/api/voice", response_model=VoiceResponse)
+def voice(request: VoiceRequest) -> VoiceResponse:
+    result = synthesize_dispatch(request.text)
+    return VoiceResponse(status=result.status, cacheKey=result.cache_key, audioUrl=result.audio_url, provider=result.provider)
+
+
 @app.post("/api/dispatch", response_model=DispatchResponse)
 def dispatch(request: DispatchRequest) -> DispatchResponse:
     scenario = request.scenario.model_copy(deep=True)
@@ -1113,8 +1153,15 @@ def dispatch(request: DispatchRequest) -> DispatchResponse:
                         release.mode = "CONTINUOUS_THEN_IMPULSIVE"
                     decision.assistantText = "Explosion recorded at the selected simulation time using the configured impulse mass. Continuous leak rate is unchanged."
                 else:
-                    decision.assistantText = "Explosion recorded, but additional released mass is unknown. The continuous leak rate is unchanged; no explosion mass has been invented. Set impulse mass and release mode to model the added release."
-                    decision.clarifyingQuestions = ["How many kilograms were released by the explosion?"]
+                    provisional_mass = min(100_000.0, release.rateKgPerSecond * release.durationMinutes * 60)
+                    if provisional_mass > 0:
+                        release.impulseMassKg = provisional_mass
+                        release.mode = "CONTINUOUS_THEN_IMPULSIVE"
+                        decision.assistantText = f"Reported explosion recorded. Provisional simulation only: using the configured {provisional_mass:g} kg release total as an additional impulse at {request.timeMinutes} minutes; continuous leak unchanged. This is not measured, a blast model, or a guaranteed worst case."
+                        decision.confidence = "LOW"
+                    else:
+                        decision.assistantText = "Reported explosion recorded; released amount is unknown. No additional mass is modeled yet. Was this a small pipe release or a storage tank?"
+                    decision.clarifyingQuestions = ["Was this a small pipe release or a storage tank?"]
         elif command.commandType == "UPDATE_WEATHER":
             start = request.timeMinutes
             previous = [_weather_sample_at(scenario, minute).model_copy(update={"minutesFromNow": minute}) for minute in range(0, 121, 5)]
@@ -1147,8 +1194,14 @@ def dispatch(request: DispatchRequest) -> DispatchResponse:
         elif command.commandType == "UPDATE_RELEASE" and normalized_value.startswith("MASS_KG_"):
             try:
                 mass = max(0.0, min(100_000.0, float(normalized_value.removeprefix("MASS_KG_"))))
-                if scenario.release.mode == "IMPULSIVE":
-                    scenario.release.impulseMassKg = max(0.001, mass)
+                if scenario.release.hasExploded or scenario.release.mode in {"IMPULSIVE", "CONTINUOUS_THEN_IMPULSIVE"}:
+                    scenario.release.impulseMassKg = mass
+                    if mass > 0 and scenario.release.mode == "CONTINUOUS":
+                        scenario.release.mode = "CONTINUOUS_THEN_IMPULSIVE"
+                    elif mass == 0:
+                        scenario.release.mode = "CONTINUOUS"
+                    decision.assistantText = f"Simulation explosion impulse updated to the operator-supplied {mass:g} kg at {scenario.release.impulseTimeMinutes} minutes. Continuous leak unchanged; this is not a measured concentration or blast prediction."
+                    decision.clarifyingQuestions = []
                 else:
                     scenario.release.rateKgPerSecond = mass / (scenario.release.durationMinutes * 60)
             except ValueError:
@@ -1176,7 +1229,7 @@ def dispatch(request: DispatchRequest) -> DispatchResponse:
 
     scenario.version += 1
     frame = make_frame(scenario, request.timeMinutes, request.context)
-    voice_result = synthesize_dispatch(decision.assistantText)
+    voice_result = synthesize_dispatch(decision.assistantText) if request.includeAudio else VoiceResult("TEXT_ONLY", "", None, "AUDIO_DEFERRED")
     return DispatchResponse(
         assistantText=decision.assistantText,
         scenario=scenario,

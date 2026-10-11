@@ -580,6 +580,8 @@ def _cache_ttl_seconds(label: str) -> float | None:
     except ValueError:
         return default_ttls.get(label, 900.0)
     if label == "Weather provider":
+        # A zero value is useful for operator-requested refreshes and is honored
+        # by the provider loader instead of silently reusing the last snapshot.
         return min(300.0, max(0.0, value)) if math.isfinite(value) else 300.0
     return None if value < 0 else value
 

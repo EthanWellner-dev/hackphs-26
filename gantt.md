@@ -11,9 +11,9 @@ The current application uses **Vite JavaScript/TypeScript, MapLibre and Three.js
 - **Implemented (scoped):** source plus focused evidence support the stated backend/helper/document behavior.
 - **Partial / in progress:** code exists or work is active, but the whole feature or final integration validation is incomplete.
 - **Planned / blocked:** acceptance has not been established; a planned time or test file alone is not proof.
-- Evidence supplied by the coordinator: historical **85-backend/15-frontend baseline**, followed by **15 mesh tests and 11 playback/cache/dispatch tests passing** during current work. These are separate scoped run results, not a cumulative total or browser acceptance. Backend contract integration remains pending. [Recorded backend smoke evidence](./docs/PERFORMANCE_RUNBOOK.md#readiness-and-weather-evidence) covers health, live bootstrap and mass scaling. This audit did not rerun full suites while implementation agents were active.
+- Evidence supplied by the coordinator: historical **85-backend/15-frontend baseline**, followed by **15 mesh tests and 11 playback/cache/dispatch tests passing** during current work. These are separate scoped run results, not a cumulative total or browser acceptance. These earlier integration notes are superseded by the latest checkpoint below. [Recorded backend smoke evidence](./docs/PERFORMANCE_RUNBOOK.md#readiness-and-weather-evidence) covers health, live bootstrap and mass scaling. This audit did not rerun full suites while implementation agents were active.
 
-**Latest checkpoint:** the coordinator reports a production build and **28 frontend tests passing before the new WebM capture and chat/voice responder additions**. Those additions, SpeechRecognition transcript review/Enter submission and backend responder parsing remain pending integration and browser validation. This checkpoint does not certify them.
+**Latest checkpoint — 2026-10-11 05:26 EDT:** coordinator reports **123 current backend tests, 28 frontend tests and a separate 31-test focused unit-assignment run passing**; do not sum overlapping runs. Actual `/api/exposure`: **1.47 seconds, 400 cells, 25 default samples**. Browser exposure view loaded real building records and displayed units; playback reached T+120; the 59px logo-free orb was verified. Actual `/api/dispatch` returned `GEMINI:gemini-3.5-flash-lite` preserving Hazmat1 roster/team type/equipment/task. CSV/PNG/JPG/WebM browser downloads and live microphone use remain unverified; tool timeouts/reloads prevented export acceptance. The previous production build is historical evidence, not a newly reported final build. Arbitrary intersections still require clarification, not fabricated geocoding.
 
 ## Judge flow to validate
 
@@ -24,6 +24,10 @@ The current application uses **Vite JavaScript/TypeScript, MapLibre and Three.js
 5. Download escaped CSV for all returned modeled buildings and PNG/JPG map captures with attribution and a simulation disclaimer only after browser verification. A perimeter GeoJSON export is a separate outstanding feature; none of these artifacts is an approved evacuation boundary.
 
 Optional Google imagery, speech/audio and provider integrations must not be represented as complete without their own acceptance results. The original Google “wow” moment is not a prerequisite for this recovery flow.
+
+## Table-based web view
+
+Open `/gantt.html` on the frontend server (for example, `http://127.0.0.1:5173/gantt.html`), or use **GANTT** in the simulator navigation. The page renders the workstream schedule and milestone acceptance tables directly from this document, with hourly timeline cells and a priority filter. Exact target windows remain visible, including the 20-minute explosion window; stretch work is deferred rather than assigned an invented time. All times are EDT. Run the frontend production build again after updating this source to refresh the deployed page.
 
 ## Workstream schedule and current status
 
@@ -78,7 +82,7 @@ Backend and renderer work can run independently; final UI validation depends on 
 | G1 — Seeded scope | One incident and supported prompt/reset flow verified against actual command behavior | Partial: backend default tested; interactive flow pending |
 | G2 — Visible command center | Browser shows source, current metrics, plume, plan/history and honest data availability | In progress: coordinator UI work |
 | G3 — Stateful interactive slice | Dispatch/manual edits/reset survive scrub/play/weather refresh; stale responses cannot overwrite them | In progress: helper tests are insufficient alone |
-| G4 — Current automated baseline | Backend/frontend suites and production build pass after current changes; generation/geometry budgets recorded | Partial: latest build and 28 frontend tests reported passing before new video/voice/responder work; final backend integration and rerun pending |
+| G4 — Current automated baseline | Backend/frontend suites and production build pass after current changes; generation/geometry budgets recorded | Partial: current backend 123/frontend 28 passed; exposure smoke 1.47s/400 cells/25 samples. Final build and broader budgets not newly verified |
 | G5 — Provider/offline recovery | Keyless core flow and independent AI/audio/weather/map failures exercised without misleading empty/success state | Not complete; no guaranteed local offline map |
 | G6 — Optional Google pass | Guarded actual tiles, visible credits, provider-denial recovery and request accounting | Not integrated/verified; omit from core pitch |
 | G7 — Freeze candidate | Known-good build copied/tagged, startup checklist exercised, no unresolved blocking interactions | Outstanding |
@@ -96,14 +100,16 @@ These are deliberately narrower than product-level completion claims:
 
 ## Active integration — do not mark complete prospectively
 
-- [~] **Backend agent:** two-hour building/area outdoor exposure, mass-conserving release corrections, API bounds/caching/performance and focused regression results.
-- [~] **Renderer agent:** merged dense cloud geometry with sparse parcel retention, negligible-concentration visual decluttering, depth/terrain behavior and bounded mesh budgets. Fifteen mesh tests are reported passing; final browser integration remains pending. The [research note](./docs/PLUME_DILUTION_AND_EXPOSURE_RESEARCH.md) recommends a provisional **renderer-only 1%-of-trace floor**, never physics deletion or a toxicological safety threshold. Hidden contributions must remain in transport, overlap summation, exposure and mass accounting; summed-field/lower-floor behavior needs verification.
-- [~] **Coordinator:** manual hazard/source/weather controls with leak/burst/combined modes, release rate/duration and burst mass/time; scenario metrics, plan/history/reset/prompts and playback/exposure wiring. Backend contract integration and browser validation remain pending.
-- [~] **Coordinator exports:** escaped CSV for all returned modeled building records, plus PNG/JPG map capture retaining attribution and simulation disclaimer. Verify complete rows, escaping/units/provenance, actual downloads and image content before completion. Perimeter GeoJSON remains a separate outstanding item.
-- [~] **New video capture:** coordinator is implementing WebM simulation recording. Verify recording/stop/download, playable output, attribution/disclaimer, unsupported-browser handling and resource cleanup; no end-to-end acceptance yet.
-- [~] **New chat/voice responders:** coordinator is implementing SpeechRecognition with transcript review and explicit Enter submission; backend agent is implementing responder parsing helpers. Verify supported commands against returned state, microphone/unsupported-browser failures and text fallback. Recognition is not response-audio playback or validated operational dispatch.
+- [x] **Verified API/tests:** current backend 123/frontend 28 tests passed; actual exposure endpoint returned 400 cells/25 default samples in 1.47 seconds. This is a scoped smoke measurement, not a universal latency guarantee.
+- [x] **Verified browser slice:** exposure view loaded real building records and displayed units, playback reached T+120, and 59px logo-free orb was confirmed. Other controls/click details and failure paths remain pending.
+- [x] **Verified responder dispatch:** actual Gemini response preserved Hazmat1 roster/team type/equipment/task; 31 focused unit-assignment tests passed. Simulated state is not operational deployment.
+- [ ] **Renderer agent:** merged dense cloud geometry with sparse parcel retention, negligible-concentration visual decluttering, depth/terrain behavior and bounded mesh budgets. Fifteen mesh tests are reported passing; final browser integration remains pending. The [research note](./docs/PLUME_DILUTION_AND_EXPOSURE_RESEARCH.md) recommends a provisional **renderer-only 1%-of-trace floor**, never physics deletion or a toxicological safety threshold. Hidden contributions must remain in transport, overlap summation, exposure and mass accounting; summed-field/lower-floor behavior needs verification.
+- [ ] **Coordinator:** manual hazard/source/weather controls with leak/burst/combined modes, release rate/duration and burst mass/time; scenario metrics, plan/history/reset/prompts and playback/exposure wiring. Backend contract integration and browser validation remain pending.
+- [ ] **Coordinator exports:** escaped CSV for all returned modeled building records, plus PNG/JPG map capture retaining attribution and simulation disclaimer. Verify complete rows, escaping/units/provenance, actual downloads and image content before completion. Perimeter GeoJSON remains a separate outstanding item.
+- [ ] **New video capture:** coordinator is implementing WebM simulation recording. Verify recording/stop/download, playable output, attribution/disclaimer, unsupported-browser handling and resource cleanup; no end-to-end acceptance yet.
+- [ ] **Chat/voice acceptance pending:** structured backend responder state is verified above. SpeechRecognition requires transcript review and explicit Enter submission; live microphone and unsupported-browser/error paths remain unverified. Arbitrary intersections require clarification, not fabricated geocoding. Recognition is not response-audio playback or validated operational dispatch.
 - [ ] **New-feature browser acceptance:** exercise complete WebM recording/download and chat/voice responder workflows after stable backend contracts; the earlier build/28-test checkpoint predates these additions.
-- [~] **Joint final validation:** all suites/build, bounded payload/render performance, browser interactions and independent failures after the above work stabilizes.
+- [ ] **Joint final validation:** all suites/build, bounded payload/render performance, browser interactions and independent failures after the above work stabilizes.
 
 ## Outstanding feature claims from the original checklist
 
@@ -112,7 +118,7 @@ These are deliberately narrower than product-level completion claims:
 - [ ] Browser speech permissions/transcript and cached-audio playback end to end; text dispatch must remain usable independently.
 - [ ] Altitude slicing and FLIR controls; old completion claims lack active UI evidence.
 - [ ] AEGL-1/2/3 iso-surfaces: current TRACE/PEL/IDLH references and visual merged shells are not AEGL contours.
-- [ ] Active-unit roster, unit markers/route overlays, genuine unit exposure/PPE model and manual location/indoor-context validation.
+- [ ] Operational resource tracking, unit markers/route overlays, genuine unit exposure/PPE model and arbitrary-address/indoor-context validation. Structured simulated roster preservation is verified above, not these broader capabilities.
 - [ ] Source explosion animation and complete candidate surface-contamination display. An event flag or API surface-zone list is not a working visualization.
 - [ ] Uniform browser retries/backoff, complete attribution audit, mobile/field layout and verified current terrain zoom/failure behavior.
 - [ ] Actual provider failure/no-key/no-network drills, presentation-laptop asset/audio checks, three rehearsals and frozen artifact.

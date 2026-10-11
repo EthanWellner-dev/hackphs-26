@@ -75,10 +75,18 @@ def apply_unit_deployment(
                 details[key] = [item.strip() for item in content.split(",")] if key == "equipment" else content
             text = text.strip()
             text = re.sub(r"^(?:please\s+)?deploy\s+", "", text, flags=re.I)
-            match = re.fullmatch(r"(?P<label>.+?)\s+(?:at|to)\s+(?P<destination>.+)", text, re.I)
+            text = re.sub(r"^(?:i|we)\s+have\s+(?:an?\s+)?", "", text, flags=re.I)
+            text = re.sub(r"\s+(?:is\s+|are\s+)?responding\s+(?=at\b|on\b|to\b)", " ", text, flags=re.I)
+            match = re.fullmatch(r"(?P<label>.+?)\s+(?:at|to|on)\s+(?P<destination>.+)", text, re.I)
             if not match:
                 return roster, "Which unit and location? Try 'deploy Engine 4 at 40.36, -74.65' or 'deploy Ambulance 2 to source'."
             label = match.group("label").strip()
+            specialization = re.fullmatch(r"(.+?)\s+with\s+(hazmat|fire|medical|ems|rescue)(?:\s+(?:capability|support))?", label, re.I)
+            if specialization:
+                label = specialization.group(1).strip()
+                details.setdefault("teamType", specialization.group(2).lower())
+            if label.lower() in {"fire team", "hazmat team", "medical team", "rescue team"}:
+                label = label[0].upper() + label[1:]
             destination = match.group("destination").strip()
             coordinates = _COORDINATES.fullmatch(destination)
             offset = _OFFSET.fullmatch(destination)
@@ -158,6 +166,30 @@ def apply_property_assignment(
         targets = [unit for unit in roster if unit.label.casefold() == unit_name]
     if len(targets) != 1:
         return roster, "Choose one existing unit by its unique unitId; deploy it on the map first if missing."
+    bulk = re.fullmatch(r"(\d+)\s+(?:(?:nearby|nearest)\s+)?(?:homes?|houses?|residential buildings?)[.!]?", property_name)
+    if bulk:
+        count = int(bulk.group(1))
+        target = targets[0]
+        if not 1 <= count <= 250:
+            return roster, "Choose between 1 and 250 known residential buildings."
+        assigned = {property_id for unit in roster for property_id in unit.assignedPropertyIds}
+        residential_types = {"house", "residential", "apartments", "detached", "semidetached_house", "terrace", "bungalow", "dormitory"}
+        candidates = {building.footprintId: building for building in buildings
+                      if building.buildingType.casefold() in residential_types and building.footprintId not in assigned}
+        if len(candidates) < count:
+            return roster, f"Only {len(candidates)} unassigned known residential buildings are loaded; none assigned. Choose a smaller count or load more map buildings. Occupancy is unknown."
+        if len(target.assignedPropertyIds) + count > 250:
+            return roster, "This assignment would exceed the unit's limit of 250 properties."
+
+        def distance(building: BuildingFootprint) -> float:
+            lat1, lat2 = math.radians(target.latitude), math.radians(building.latitude)
+            dlat = lat2 - lat1
+            dlon = math.radians(building.longitude - target.longitude)
+            return math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+
+        nearest = sorted(candidates.values(), key=lambda building: (distance(building), building.footprintId))[:count]
+        target.assignedPropertyIds.extend(building.footprintId for building in nearest)
+        return roster, None
     matches = [building for building in buildings if building.footprintId.casefold() == property_name]
     if not matches:
         matches = [building for building in buildings if building.displayName.casefold() == property_name]

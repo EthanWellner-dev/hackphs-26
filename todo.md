@@ -9,8 +9,8 @@ Status: `[x]` implemented with focused evidence **at the stated scope** · `[~]`
 - **Backend:** [API and model implementation](./backend/app/main.py), [API contracts](./backend/tests/test_api_contracts.py), [model/dispatch tests](./backend/tests/test_backend_slice.py), [transport tests](./backend/tests/test_live_transport.py), [weather orchestration](./backend/tests/test_weather_orchestration.py).
 - **Providers:** [context implementation](./backend/app/services/context.py), [context tests](./backend/tests/test_context.py), [Gemini tests](./backend/tests/test_agent_provider.py), [voice tests](./backend/tests/test_voice_provider.py), [map guard tests](./backend/tests/test_map_guard.py).
 - **Browser:** [active MapLibre entrypoint](./frontend/src/main.js), [HTML dashboard](./frontend/index.html), [plume layer](./frontend/src/plumeLayer.js), [timeline tests](./frontend/src/timeline.test.ts), [dispatch helper tests](./frontend/src/aiDispatch.test.ts), [playback tests](./frontend/src/playback.test.ts), [geometry tests](./frontend/src/plumeLayer.test.js). The current app is Vite plus JavaScript/TypeScript and MapLibre/Three.js, **not a mounted React/Cesium application**. Installed dependencies are not implemented features.
-- **Recorded evidence, not final integration sign-off:** the coordinator reports a historical 85-backend/15-frontend baseline, then **15 mesh tests and 11 playback/cache/dispatch tests passing** during the current work. These are scoped run results, not a cumulative count or browser acceptance. Backend contract integration is still pending. The [runbook](./docs/PERFORMANCE_RUNBOOK.md#readiness-and-weather-evidence) records backend health/live-weather/mass-scaling smoke evidence. This audit inspected source/tests without rerunning the full suites while implementation agents were active.
-- **Latest checkpoint:** the coordinator reports a production build and **28 frontend tests passing before the new WebM recording and chat/voice responder additions**. Those additions and backend responder parsing are still pending integration; the checkpoint does not establish their end-to-end behavior.
+- **Recorded evidence, not final integration sign-off:** the coordinator reports a historical 85-backend/15-frontend baseline, then **15 mesh tests and 11 playback/cache/dispatch tests passing** during the current work. These are scoped run results, not a cumulative count or browser acceptance. These earlier integration notes are superseded by the latest checkpoint below. The [runbook](./docs/PERFORMANCE_RUNBOOK.md#readiness-and-weather-evidence) records backend health/live-weather/mass-scaling smoke evidence. This audit inspected source/tests without rerunning the full suites while implementation agents were active.
+- **Latest checkpoint — 2026-10-11 05:26 EDT:** coordinator reports **123 current backend tests and 28 frontend tests passing**, plus **31 focused unit-assignment tests** (not added to the full-suite total). Actual `/api/exposure` returned in **1.47 seconds with 400 cells and 25 default samples**; the browser loaded the exposure view with real building records and displayed units. Actual `/api/dispatch` returned `GEMINI:gemini-3.5-flash-lite`, preserving Hazmat1 roster, team type, equipment and task. Browser checks confirmed the 59px logo-free orb and playback reaching T+120. These narrow results supersede earlier pending backend-integration notes. CSV/PNG/JPG/WebM downloads and live microphone acceptance remain unverified; tool timeouts/reloads prevented export acceptance. The production build evidence remains the earlier checkpoint, not a newly reported final build.
 - **Research boundary:** [dilution and exposure research](./docs/PLUME_DILUTION_AND_EXPOSURE_RESEARCH.md) documents a provisional renderer-only floor at 1% of configured trace concentration. This is neither a health threshold nor physical mass removal; transport, overlap sums, exposure and mass accounting must retain hidden contributions. Summed-field and lower-floor comparisons remain validation requirements.
 - **Planning only:** [build plan](./docs/JUDGE_READY_BUILD_PLAN.md), [request budget](./docs/API_CALL_BUDGET.md), [runbook](./docs/PERFORMANCE_RUNBOOK.md), [rehearsal script](./docs/DEMO_REHEARSAL_SCRIPT.md). Their proposed Cesium/local-safe paths and failure-drill instructions are not evidence that the active browser implements or has passed them.
 
@@ -24,8 +24,10 @@ Status: `[x]` implemented with focused evidence **at the stated scope** · `[~]`
 - [~] Derive metrics/legends from the active frame and hazard; remove invented population/property numbers; verify current integration and release-mass edits.
 - [~] Make timeline scrubbing revision-safe, bounded and cached; helper coverage exists, current dispatch/weather integration still requires browser verification.
 - [~] Merge dense overlapping plume parcels into bounded smooth geometry while preserving sparse parcels; do not describe visual shells as scientifically derived exposure thresholds.
-- [~] Play/pause/restart the five-minute forecast through T+120; cancellation/cache helper tests exist, browser acceptance pending.
-- [~] Add two-hour outdoor exposure API and building/area overlays with peak, mean and concentration-time integral click details. Backend and UI work are active; this is **not personal absorbed dose**.
+- [x] Observe forecast playback reaching T+120 in the browser. Evidence: coordinator's final browser check; this does not verify every cancellation/pause/restart interaction.
+- [~] Verify pause/restart and cancellation across scenario/weather changes; helper tests exist, complete browser acceptance remains pending.
+- [x] Serve the outdoor two-hour exposure API and load its browser view with real building records and displayed units. Evidence: actual `/api/exposure` took 1.47 seconds for 400 cells and 25 default samples; browser view loaded. This is **not personal absorbed dose**.
+- [~] Verify every exposure click-detail field and overlay interaction; the successful view-load check does not establish all interactions or physical accuracy.
 - [~] Validate geometry budgets, playback cancellation, mass/exposure scaling, API performance and final browser integration before promoting these features.
 
 ## 1. Foundation and project setup
@@ -41,7 +43,7 @@ Status: `[x]` implemented with focused evidence **at the stated scope** · `[~]`
 ## 2. AI dispatcher and voice
 
 - [x] Implement deterministic single-command shortcuts for explosion, wind, release mass, deployment acknowledgement and no-op input. Evidence: agent, transport and backend-slice tests. This is not arbitrary multi-command planning or real unit deployment.
-- [x] Validate structured Gemini responses and fall back on malformed responses/provider exceptions. Evidence: mocked Gemini tests; live Gemini success is not established by mocks.
+- [x] Validate structured Gemini responses and fall back on malformed responses/provider exceptions. Evidence: mocked Gemini tests plus an actual `/api/dispatch` response from `GEMINI:gemini-3.5-flash-lite` preserving Hazmat1 roster/team type/equipment/task. This single live check is not comprehensive provider reliability evidence.
 - [x] Bound repeated dispatcher decisions in a 128-entry cache. Evidence: agent implementation and cache tests.
 - [x] Cache ElevenLabs MP3 output and return text-only on missing configuration, empty audio or provider failure. Evidence: mocked voice tests, including SDK invocation and cache behavior.
 - [ ] Add an explicit provider retry/backoff policy for transient AI/audio failures.
@@ -51,7 +53,9 @@ Status: `[x]` implemented with focused evidence **at the stated scope** · `[~]`
 - [~] Render the full action plan, command history and unit acknowledgements in the active UI; coordinator owns current implementation/validation.
 - [ ] Add/verify browser audio playback and cached-audio controls. Backend audio generation alone does not meet this gate.
 - [~] Add browser SpeechRecognition for chat/voice responder commands; the coordinator is implementing transcript review followed by explicit Enter submission, not automatic dispatch. Verify microphone permissions, unsupported-browser/error states and text fallback before completion.
-- [~] Integrate backend responder-command parsing helpers with chat/voice input and actual returned responder state. Backend agent work is active; parser tests alone will not establish browser integration or operational resource tracking.
+- [x] Preserve structured responder roster/team type/equipment/task through an actual dispatch response. Evidence: live Hazmat1 response and 31 focused unit-assignment tests reported passing; this is simulated state, not operational resource tracking.
+- [x] Verify the dispatch orb is 59px and logo-free in the browser.
+- [~] Verify full chat/voice responder workflows; live microphone input remains untested. Arbitrary addresses/intersections require clarification rather than fabricated geocoding.
 - [ ] Validate chat/voice responder commands end to end, including reviewed transcripts, explicit submission, state updates and failure recovery. Speech recognition is distinct from ElevenLabs response playback.
 
 ## 3. Plume simulation and hazard library
@@ -105,7 +109,8 @@ Status: `[x]` implemented with focused evidence **at the stated scope** · `[~]`
 - [~] Verify text dispatch updates scenario/frame while preserving the scenario during scrubbing, weather refresh and playback.
 - [~] Complete manual hazard/release/weather/location controls, including leak, burst and combined modes with rate, duration, burst mass and burst time. Coordinator implementation is active; backend contract integration and browser validation remain pending.
 - [~] Complete seeded prompts, baseline reset, command history and action-plan/assumption/provenance panels; coordinator owns current work.
-- [ ] Implement a real active-unit roster/resource model; a deployment acknowledgement or incident-label change is not unit tracking.
+- [x] Preserve a structured simulated responder roster with team type, equipment and task in dispatch state; actual Hazmat1 dispatch and browser unit display were verified.
+- [ ] Validate operational resource tracking and arbitrary-address geocoding; unrecognized intersections currently require clarification.
 - [~] Export all returned modeled building records as escaped CSV; coordinator implementation is active. Verify complete row coverage, quoting/escaping, units/provenance and browser download after backend contract integration. Returned records are not a complete building inventory.
 - [~] Export PNG/JPG map captures retaining attribution and a simulation disclaimer; coordinator implementation is active. Verify actual downloads, rendered content and credits/disclaimer in both formats before completion.
 - [~] Add WebM video capture of the simulation; coordinator frontend implementation is active. Browser recording, stop/download behavior, attribution/disclaimer retention and unsupported-capture handling remain unverified.
@@ -119,7 +124,8 @@ Status: `[x]` implemented with focused evidence **at the stated scope** · `[~]`
 - [~] Cover every hazard/command path and every documented endpoint/failure response. Existing tests are representative; exhaustive coverage and new exposure endpoints need final evidence.
 - [x] Keep Gemini/ElevenLabs provider tests mocked and verify cache/fallback behavior without paid calls.
 - [x] Maintain dispatch/timeline/formatting helper tests; prior 15-test frontend baseline is recorded, not full browser coverage.
-- [~] Rerun backend/frontend suites and production build/type-check after all active changes; validate the actual shipped JavaScript, not only typed helper modules.
+- [x] Run the current full backend suite (123 passed) and frontend suite (28 passed), as reported by the coordinator. Focused unit-assignment run: 31 passed; not an additional full-suite count.
+- [~] Reconfirm final production build/type-check and actual shipped JavaScript after all edits; the prior build checkpoint does not establish all browser workflows.
 - [~] Measure current frame/exposure generation, geometry caps, response size, browser FPS and request fan-out.
 - [ ] Verify the complete browser flow without API keys and with each provider independently unavailable, including map style/tiles/DEM and audio.
 - [ ] Verify no stale playback/dispatch/weather result overwrites a newer manual edit/reset.

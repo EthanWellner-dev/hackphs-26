@@ -1,7 +1,12 @@
+import { createVoiceInput } from './voiceInput.js';
+import { prepareMapStyle, BUILDING_MIN_ZOOM } from './mapStyle.js';
 ﻿import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-maplibregl.setWorkerUrl(new URL('../node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs', import.meta.url).href);
+const mapWorkerUrl = '/maplibre-gl-worker.mjs';
+import { loadMapStyle, searchPlaces, deploymentLocation } from './mapRequests.js';
+import { submitDispatch } from './aiDispatch.ts';
+maplibregl.setWorkerUrl(mapWorkerUrl);
 import { createPlumeLayer } from './plumeLayer.js';
 import { ForecastPlayback } from './playback.js';
 import { exposureCsv, downloadBlob, downloadMapImage, recordMapVideo } from './exports.js';
@@ -82,11 +87,24 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
             maxzoom: TERRAIN_DISABLE_ZOOM
         };
 
+        const fallbackMapStyle = () => ({
+            version: 8,
+            sources: {
+                'osm-fallback': { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, attribution: '© OpenStreetMap contributors' },
+            },
+            layers: [{ id: 'osm-fallback', type: 'raster', source: 'osm-fallback', minzoom: 0, maxzoom: 19 }],
+        });
+
         async function initMap() {
             try {
-                // Fetch Liberty Style from OpenFreeMap
-                const res = await fetch('https://tiles.openfreemap.org/styles/liberty');
-                const styleJson = await res.json();
+                // Keep the renderer usable when the remote vector style is slow or unavailable.
+                let styleJson;
+                try {
+                    styleJson = prepareMapStyle(await loadMapStyle());
+                } catch (styleError) {
+                    console.warn('OpenFreeMap style unavailable; using raster fallback', styleError);
+                    styleJson = fallbackMapStyle();
+                }
 
                 // Inject DEM terrain. No satellite provider is configured in this deployment.
                 if (!styleJson.sources) styleJson.sources = {};
@@ -103,9 +121,11 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
                     pitch: 68,
                     bearing: -20,
                     attributionControl: true,
+                    canvasContextAttributes: { preserveDrawingBuffer: true },
                     maxTileCacheSize: 128,
                     fadeDuration: 0,
                     refreshExpiredTiles: false,
+                    pixelRatio: Math.min(window.devicePixelRatio || 1, 1.5),
                     transformRequest: (url) => ({ url })
                 });
 
@@ -115,21 +135,25 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
                     if (terrainEnabled && !map.getTerrain()) map.setTerrain({ source: 'terrain-source', exaggeration: 1.8 });
                 });
 
+                if (import.meta.env.DEV) window.__aeroMap = map;
                 map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
 
+                map.on('error', event => {
+                    if (event?.error) console.warn('Map tile/style error', event.error);
+                });
                 map.once('style.load', () => {
                     addSourcePin();
                     addAffectedPropertyLayer();
                     addExposureLayers();
-                    plumeLayer = createPlumeLayer({ maplibregl });
+                    plumeLayer = createPlumeLayer({ maplibregl, visualCutoffFraction: 0 });
                     map.addLayer(plumeLayer);
                     map.on('rotate', updateWindBadge);
                     showToast("Princeton Middle School map ready. Terrain and 3D chlorine plume loaded.");
-                    loadBackendData();
+                    if (plumeFrame) renderPlume(plumeFrame, plumeIsFallback);
+                    if (exposureMode) setExposureMode(true);
                 });
 
-                setupSearchEngine();
-                setupEventListeners();
+
             } catch (err) {
                 console.error("Error initializing MapLibre map:", err);
                 showToast("Error loading map engine.");
@@ -155,7 +179,7 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
         function addAffectedPropertyLayer() {
             if (!map || map.getSource('affected-properties')) return;
             map.addSource('affected-properties', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-            map.addLayer({ id: 'affected-properties-fill', type: 'fill-extrusion', source: 'affected-properties', paint: { 'fill-extrusion-color': ['get', 'color'], 'fill-extrusion-height': 8, 'fill-extrusion-opacity': 0.45 } });
+            map.addLayer({ id: 'affected-properties-fill', type: 'fill-extrusion', minzoom: BUILDING_MIN_ZOOM, source: 'affected-properties', paint: { 'fill-extrusion-color': ['get', 'color'], 'fill-extrusion-height': 8, 'fill-extrusion-opacity': 0.45 } });
         }
 
         function addExposureLayers() {
@@ -163,7 +187,7 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
                 map.addSource(id, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
             }
             map.addLayer({ id: 'exposure-area-fill', type: 'fill', source: 'exposure-areas', layout: { visibility: 'none' }, paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.38 } });
-            map.addLayer({ id: 'exposure-building-fill', type: 'fill-extrusion', source: 'exposure-buildings', layout: { visibility: 'none' }, paint: { 'fill-extrusion-color': ['get', 'color'], 'fill-extrusion-height': 10, 'fill-extrusion-opacity': 0.85 } });
+            map.addLayer({ id: 'exposure-building-fill', type: 'fill-extrusion', minzoom: BUILDING_MIN_ZOOM, source: 'exposure-buildings', layout: { visibility: 'none' }, paint: { 'fill-extrusion-color': ['get', 'color'], 'fill-extrusion-height': 10, 'fill-extrusion-opacity': 0.85 } });
             map.on('click', event => {
                 if (!exposureMode || !exposureData) return;
                 const hits = map.queryRenderedFeatures(event.point, { layers: ['exposure-building-fill', 'exposure-area-fill'] });
@@ -209,8 +233,8 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
                 if (String(ring[0]) !== String(ring[ring.length - 1])) ring.push(ring[0]);
                 return { type: 'Feature', properties: { displayName: item.displayName, color: item.color, peakConcentration: item.peakConcentration, meanConcentration: item.meanConcentration, timeIntegratedConcentration: item.timeIntegratedConcentration }, geometry: { type: 'Polygon', coordinates: [ring] } };
             }) });
-            map.getSource('exposure-areas').setData(collection(data.areas || []));
-            map.getSource('exposure-buildings').setData(collection(data.buildings || []));
+            map.getSource('exposure-areas')?.setData(collection(data.areas || []));
+            map.getSource('exposure-buildings')?.setData(collection(data.buildings || []));
             document.getElementById('exposure-summary').textContent = `T+0–120 · ${data.exposureUnit} outdoor exposure. Colors: blue → yellow → red by mean concentration. Click a building or area. Grid ${data.gridResolutionMeters} m; ${data.domainTruncated ? 'bounded / truncated coverage' : 'sampled coverage'}. Not personal dose.`;
             const list = document.getElementById('affected-list');
             list.replaceChildren();
@@ -256,17 +280,25 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
             frames.seed(frame);
             updateTimelineUi();
             updateMetrics(frame);
-            updateUnitMarkers();
             if (!exposureMode) updateAffectedProperties(frame);
             plumeLayer?.update(frame, scenario, contextSnapshot);
             plumeLayer?.setVisible?.(!exposureMode);
+            if (document.getElementById('forecast-follow').checked && !fallback && frame.particles?.length && map?.isStyleLoaded()) {
+                const points = frame.particles.filter(p => p.concentration > 0);
+                if (points.length) {
+                    const bounds = new maplibregl.LngLatBounds();
+                    for (const p of points) bounds.extend([p.longitude, p.latitude]);
+                    map.fitBounds(bounds, { padding: { top: 90, bottom: 100, left: Math.min(300, innerWidth * .25), right: Math.min(260, innerWidth * .22) }, maxZoom: 15, duration: 550 });
+                }
+            }
             const mode = document.getElementById('plume-mode');
-            if (mode) mode.textContent = fallback ? 'Simulation unavailable' : '3D simulated plume / approximate terrain flow';
+            if (mode) mode.textContent = fallback ? 'Simulation unavailable' : '3D forecast ? low-concentration parcels retained ? not a safety boundary';
         }
 
         async function loadBackendData() {
             try {
-                const response = await fetch(API_BASE + '/api/bootstrap?latitude=40.360556&longitude=-74.6542123', { headers: { Accept: 'application/json' } });
+                const refresh = Date.now();
+                const response = await fetch(API_BASE + '/api/bootstrap?latitude=40.360556&longitude=-74.6542123&mapMode=OPEN_3D&_=' + refresh, { cache: 'no-store', headers: { Accept: 'application/json', 'Cache-Control': 'no-cache' } });
                 if (!response.ok) throw new Error('bootstrap ' + response.status);
                 const data = await response.json();
                 scenario = data.scenario;
@@ -274,6 +306,7 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
                 incidentStartedAt = Date.parse(scenario.incidentStartedAt) || Date.now();
                 invalidateForecasts();
                 renderPlume(data.frame);
+                updateUnitMarkers();
                 updateWeatherUi();
                 syncReleaseControls();
                 loadHazardOptions();
@@ -368,23 +401,32 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
             }
         }
 
+        const voiceInput = createVoiceInput({
+            onState(state, message) {
+                const active = state === 'listening' || state === 'requesting';
+                document.getElementById('voice-status').textContent = message;
+                document.getElementById('voice-panel').hidden = false;
+                document.getElementById('ai-dispatch-orb').setAttribute('aria-pressed', String(active));
+                document.getElementById('ai-dispatch-orb').setAttribute('aria-label', active ? 'Stop voice recording' : 'Start voice dispatch');
+            },
+            onTranscript(text) {
+                document.getElementById('dispatch-input').value = text;
+                confirmedDispatchText = null;
+                setDispatchOpen(true);
+                document.getElementById('dispatch-examples').open = false;
+                document.getElementById('voice-panel').hidden = true;
+            },
+            async transcribe(blob) {
+                const response = await fetch(API_BASE + '/api/transcribe', { method: 'POST', headers: { 'Content-Type': blob.type }, body: blob, signal: AbortSignal.timeout(35000) });
+                const body = await response.json();
+                if (!response.ok) throw new Error(body.detail || 'Transcription unavailable.');
+                return body.text;
+            },
+        });
         function startVoiceDispatch() {
-            const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            const input = document.getElementById('dispatch-input');
-            input.classList.remove('hidden');
-            document.getElementById('dispatch-examples').hidden = false;
-            document.getElementById('dispatch-chat-toggle').setAttribute('aria-expanded', 'true');
-            if (!Recognition) { input.focus(); return showToast('Voice recognition is unavailable here. Type your dispatch message instead.'); }
-            if (voiceRecognition) { voiceRecognition.stop(); return; }
-            const recognition = new Recognition();
-            voiceRecognition = recognition;
-            recognition.lang = 'en-US'; recognition.interimResults = false;
-            recognition.onresult = event => { input.value = event.results[0][0].transcript; input.focus(); showToast('Transcript ready. Review and press Enter to dispatch.'); };
-            recognition.onerror = event => showToast(`Voice unavailable (${event.error}). You can type instead.`);
-            recognition.onend = () => { voiceRecognition = null; document.getElementById('ai-dispatch-orb').setAttribute('aria-pressed', 'false'); };
-            document.getElementById('ai-dispatch-orb').setAttribute('aria-pressed', 'true');
-            try { recognition.start(); showToast('Listening. Browser microphone permission may be required.'); }
-            catch { voiceRecognition = null; showToast('Microphone unavailable; use text dispatch.'); }
+            document.getElementById('dispatch-panel').hidden = true;
+            document.getElementById('dispatch-chat-toggle').setAttribute('aria-expanded', 'false');
+            voiceInput.toggle();
         }
 
         function updateUnitMarkers() {
@@ -448,7 +490,7 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
             weatherRequest = new AbortController();
             const timeout = setTimeout(() => weatherRequest?.abort(), 25000);
             try {
-                const response = await fetch(API_BASE + '/api/context/live?latitude=' + location.latitude + '&longitude=' + location.longitude, { signal: weatherRequest.signal, cache: 'no-store', headers: { Accept: 'application/json' } });
+                const response = await fetch(API_BASE + '/api/context/live?latitude=' + location.latitude + '&longitude=' + location.longitude + '&_=' + Date.now(), { signal: weatherRequest.signal, cache: 'no-store', headers: { Accept: 'application/json', 'Cache-Control': 'no-cache' } });
                 if (!response.ok) throw new Error('weather ' + response.status);
                 const context = await response.json();
                 if (revision !== frames.revision) return;
@@ -535,20 +577,82 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
             }) });
         }
 
+        let confirmedDispatchText = null;
+        let lastSpokenText = '';
+        let speechSequence = 0;
+        let dispatchAudio = null;
+
+        function setDispatchOpen(open) {
+            document.getElementById('dispatch-panel').hidden = !open;
+            document.getElementById('dispatch-chat-toggle').setAttribute('aria-expanded', String(open));
+            if (open) document.getElementById('dispatch-input').focus();
+            else document.getElementById('dispatch-chat-toggle').focus();
+        }
+
+        function showLocationChoices(text, location, places) {
+            const container = document.getElementById('dispatch-locations');
+            container.replaceChildren();
+            document.getElementById('dispatch-response').textContent = places.length
+                ? 'Confirm the location below before adding this simulated team. No position has been applied yet.'
+                : 'No matching location. Add a city or enter latitude, longitude. No pin has been guessed.';
+            for (const place of places.slice(0, 5)) {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.textContent = place.display_name;
+                button.addEventListener('click', () => {
+                    confirmedDispatchText = text.slice(0, location.start) + `${place.lat}, ${place.lon}` + text.slice(location.end);
+                    container.replaceChildren();
+                    sendDispatch();
+                });
+                container.append(button);
+            }
+        }
+
+        async function speakDispatch(text, audio) {
+            if (!text) return;
+            lastSpokenText = text;
+            const sequence = ++speechSequence;
+            dispatchAudio?.pause();
+            if (!document.getElementById('dispatch-speak').checked) return;
+            const status = document.getElementById('dispatch-audio-status');
+            status.textContent = 'Preparing spoken reply…';
+            try {
+                if (!audio?.audioUrl) {
+                    const response = await fetch(API_BASE + '/api/voice', { method: 'POST', signal: AbortSignal.timeout(18000), headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+                    if (!response.ok) throw new Error('Speech unavailable');
+                    audio = await response.json();
+                }
+                if (sequence !== speechSequence || !document.getElementById('dispatch-speak').checked) return;
+                if (!audio?.audioUrl) throw new Error('Speech unavailable');
+                dispatchAudio = new Audio(API_BASE + audio.audioUrl);
+                dispatchAudio.playbackRate = 1.2;
+                await dispatchAudio.play();
+                status.textContent = 'ElevenLabs · playing at 1.2×';
+                dispatchAudio.onended = () => { status.textContent = 'Spoken reply complete.'; };
+            } catch {
+                if (sequence === speechSequence) status.textContent = 'Audio unavailable or autoplay blocked. Use Replay to retry; the text response is still available.';
+            }
+        }
+
         async function sendDispatch() {
             const input = document.getElementById('dispatch-input');
             const text = input?.value.trim();
             if (!text) return showToast('Describe an incident update first.');
-            if (!scenario) return showToast('AI dispatch is using local mode; map is still available.');
+            if (!scenario) return showToast('Wait for the incident to load before sending an update.');
+            if (input.disabled) return;
+            input.disabled = true;
+            document.getElementById('dispatch-send').disabled = true;
+            document.getElementById('dispatch-response').textContent = 'Reviewing your update…';
             try {
-                const dispatchApi = globalThis.AeroDispatch;
-                const data = dispatchApi
-                    ? await dispatchApi.submitDispatch(fetch, API_BASE + '/api/dispatch', text, scenario, contextSnapshot, selectedTimeMinutes)
-                    : await (async () => {
-                        const response = await fetch(API_BASE + '/api/dispatch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, scenario, context: contextSnapshot, timeMinutes: selectedTimeMinutes }) });
-                        if (!response.ok) throw new Error('dispatch ' + response.status);
-                        return response.json();
-                    })();
+                const location = deploymentLocation(text);
+                if (location && !confirmedDispatchText) {
+                    const places = await searchPlaces(location.query);
+                    showLocationChoices(text, location, places);
+                    return;
+                }
+                const submittedText = confirmedDispatchText || text;
+                confirmedDispatchText = null;
+                const data = await submitDispatch(fetch, API_BASE + '/api/dispatch', submittedText, scenario, contextSnapshot, selectedTimeMinutes, false);
                 invalidateForecasts();
                 scenario = data.scenario || scenario;
                 if (data.frame && Number(data.frame.timeMinutes) === selectedTimeMinutes) renderPlume(data.frame);
@@ -556,11 +660,14 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
                 updateWeatherUi();
                 updateUnitMarkers();
                 syncReleaseControls();
-                document.getElementById('dispatch-examples').hidden = false;
                 document.getElementById('dispatch-response').textContent = `${data.assistantText || 'Scenario updated.'} (${data.provider || 'dispatcher'})`;
                 showToast(data.assistantText || 'AI dispatch updated the scenario.');
                 input.value = '';
-            } catch (error) { showToast('AI service unavailable. Update was not applied; please retry.'); }
+                speakDispatch(data.assistantText, data.audio);
+            } catch (error) {
+                document.getElementById('dispatch-response').textContent = 'The dispatcher could not finish that update. Nothing was applied; please try again.';
+                showToast('AI service unavailable. Update was not applied; please retry.');
+            } finally { input.disabled = false; document.getElementById('dispatch-send').disabled = false; }
         }
 
 
@@ -652,8 +759,8 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
 
                 searchTimeout = setTimeout(async () => {
                     try {
-                        const response = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query));
-                        const data = await response.json();
+                        const data = await searchPlaces(query);
+                        if (searchInput.value.trim() !== query) return;
                         searchResults.innerHTML = '';
 
                         if (!data || data.length === 0) {
@@ -662,7 +769,7 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
                             data.slice(0, 5).forEach(place => {
                                 const div = document.createElement('div');
                                 div.className = 'p-3 hover:bg-slate-800 cursor-pointer transition-all flex flex-col';
-                                div.innerHTML = '<span class="font-semibold text-sm text-white">' + place.display_name + '</span><span class="text-xs text-slate-400">Lat: ' + place.lat + ', Lng: ' + place.lon + '</span>';
+                                div.textContent = place.display_name;
                                 div.onclick = () => {
                                     const lon = parseFloat(place.lon);
                                     const lat = parseFloat(place.lat);
@@ -680,7 +787,7 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
                     } catch (err) {
                         console.warn("Geocoding network error", err);
                     }
-                }, 400);
+                }, 600);
             });
 
             document.addEventListener('click', (e) => {
@@ -729,6 +836,8 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
             });
             document.getElementById('forecast-video').addEventListener('click', exportForecastVideo);
             document.getElementById('ai-dispatch-orb').addEventListener('click', startVoiceDispatch);
+            document.getElementById('voice-record').addEventListener('click', () => voiceInput.record());
+            document.getElementById('voice-cancel').addEventListener('click', () => { voiceInput.cancel(); document.getElementById('voice-panel').hidden = true; });
             document.getElementById('release-form').addEventListener('submit', applyRelease);
             for (const format of ['csv', 'png', 'jpg']) document.getElementById('export-' + format).addEventListener('click', () => exportExposure(format));
             document.getElementById('view-plume').addEventListener('click', () => setExposureMode(false));
@@ -748,14 +857,14 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
             const dispatchInput = document.getElementById('dispatch-input');
             const dispatchToggle = document.getElementById('dispatch-chat-toggle');
             if (dispatchToggle && dispatchInput) {
-                dispatchToggle.addEventListener('click', () => {
-                    const isHidden = dispatchInput.classList.toggle('hidden');
-                    dispatchToggle.setAttribute('aria-expanded', String(!isHidden));
-                    document.getElementById('dispatch-examples').hidden = isHidden;
-                    if (!isHidden) { dispatchInput.focus(); showToast('Describe what changed, or choose an example. Press Enter to send.'); }
-                });
-                dispatchInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') sendDispatch(); if (event.key === 'Escape') { dispatchInput.classList.add('hidden'); dispatchToggle.setAttribute('aria-expanded', 'false'); } });
+                dispatchToggle.addEventListener('click', () => setDispatchOpen(document.getElementById('dispatch-panel').hidden));
+                document.getElementById('dispatch-close').addEventListener('click', () => setDispatchOpen(false));
+                document.getElementById('dispatch-form').addEventListener('submit', event => { event.preventDefault(); sendDispatch(); });
+                document.addEventListener('keydown', event => { if (event.key === 'Escape') { setDispatchOpen(false); voiceInput.cancel(); document.getElementById('voice-panel').hidden = true; } });
+                dispatchInput.addEventListener('input', () => { confirmedDispatchText = null; document.getElementById('dispatch-locations').replaceChildren(); });
+                document.getElementById('dispatch-replay').addEventListener('click', () => speakDispatch(lastSpokenText));
             }
+
             const clearSnapButton = document.getElementById('btn-clear-snap');
             if (clearSnapButton) clearSnapButton.addEventListener('click', clearSnap);
             const btnOpenLoader = document.getElementById('btn-open-loader');
@@ -802,6 +911,7 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
             }, 3500);
         }
 
-        window.onload = function() {
-            initMap();
-        };
+        setupSearchEngine();
+        setupEventListeners();
+        loadBackendData();
+        initMap();

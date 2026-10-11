@@ -68,6 +68,9 @@ export async function downloadMapImage(map, format, lines) {
         const timeout = setTimeout(() => { map.off('render', capture); reject(new Error('Map render timed out')); }, 10000);
         map.once('render', capture);
         map.triggerRepaint();
+        // The map preserves its drawing buffer for reliable export even in inactive tabs.
+        map.off('render', capture);
+        capture();
     });
     const footer = 130;
     const canvas = document.createElement('canvas');

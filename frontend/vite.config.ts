@@ -18,6 +18,11 @@ const contentTypes: Record<string, string> = {
 };
 
 function serveCesiumAssets(server: ViteDevServer): void {
+  server.middlewares.use('/maplibre-gl-worker.mjs', (_request, response) => {
+    response.setHeader('Content-Type', 'text/javascript');
+    response.setHeader('Cache-Control', 'public, max-age=3600');
+    response.end(readFileSync(resolve('node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs')));
+  });
   server.middlewares.use('/cesium', (request, response, next) => {
     const relativePath = decodeURIComponent((request.url ?? '').split('?')[0]).replace(/^\/+/, '');
     const filePath = resolve(cesiumBuildRoot, relativePath);
@@ -33,6 +38,14 @@ function serveCesiumAssets(server: ViteDevServer): void {
 }
 
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      input: {
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        gantt: fileURLToPath(new URL('./gantt.html', import.meta.url)),
+      },
+    },
+  },
   plugins: [
     react(),
     { name: 'serve-cesium-assets', configureServer: serveCesiumAssets },

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import hashlib
 import os
 import re
@@ -60,3 +61,21 @@ def synthesize_dispatch(text: str) -> VoiceResult:
         return VoiceResult("READY", cache_key, f"/audio-cache/{output_path.name}", "ELEVENLABS")
     except Exception:
         return VoiceResult("TEXT_ONLY", cache_key, None, "TEXT_FALLBACK_PROVIDER_ERROR")
+
+
+def transcribe_recording(data: bytes, content_type: str) -> str:
+    api_key = os.getenv("ELEVENLABS_API_KEY", "").strip()
+    if not api_key or ElevenLabs is None:
+        raise RuntimeError("ElevenLabs transcription is not configured. Use browser speech recognition in Chrome or Edge.")
+    suffix = {"audio/mp4": "mp4", "audio/ogg": "ogg", "audio/wav": "wav"}.get(content_type, "webm")
+    recording = io.BytesIO(data)
+    recording.name = f"dispatch.{suffix}"
+    try:
+        client = ElevenLabs(api_key=api_key, timeout=25)
+        result = client.speech_to_text.convert(file=recording, model_id="scribe_v1", language_code="eng")
+        text = (result.text or "").strip()
+    except Exception as error:
+        raise RuntimeError("Transcription provider unavailable. Retry recording or use browser speech recognition.") from error
+    if not text:
+        raise RuntimeError("No speech detected. Check your microphone and try again.")
+    return text[:1000]

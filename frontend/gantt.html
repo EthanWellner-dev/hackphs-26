@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Aero-Hazard recovery schedule and milestone acceptance gates.">
+    <title>Project timeline · Aero-Hazard / Plume</title>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="./">AERO-HAZARD <span>/ PLUME</span></a>
+      <a href="./">← Back to simulator</a>
+    </header>
+    <main>
+      <p class="eyebrow">hackPHS 2026 · Project planning</p>
+      <h1>Recovery timeline</h1>
+      <p class="intro">The road to a judge-ready demo, one acceptance gate at a time.</p>
+      <section aria-labelledby="schedule-heading">
+        <div class="section-heading">
+          <div><p class="eyebrow">Saturday, Oct 10 → Sunday, Oct 11</p><h2 id="schedule-heading">Workstream schedule</h2></div>
+          <div><label for="priority">Priority</label> <select id="priority"><option value="all">All priorities</option><option value="P0">P0 · Core</option><option value="P1">P1 · Polish</option><option value="Optional">Optional</option><option value="P2">P2 · Stretch</option></select></div>
+        </div>
+        <div class="legend" aria-label="Timeline legend"><span><i class="core"></i>P0 · Core</span><span><i class="polish"></i>P1 · Polish</span><span><i class="optional"></i>Optional</span><span>Bars show target windows, not percent complete.</span></div>
+        <p id="row-count" class="muted" role="status"></p>
+        <p id="scroll-hint" class="muted">Scroll horizontally to explore the full timeline. Exact windows and remaining work are listed in each row.</p>
+        <div class="table-scroll" role="region" aria-label="Workstream timeline" aria-describedby="scroll-hint" tabindex="0"><table id="schedule"></table></div>
+      </section>
+      <section aria-labelledby="gates-heading"><div class="section-heading"><div><p class="eyebrow">Evidence before sign-off</p><h2 id="gates-heading">Milestone acceptance gates</h2></div></div><div class="table-scroll" role="region" aria-label="Acceptance gates" tabindex="0"><table id="gates"></table></div></section>
+      <footer><strong>Simulation prototype only.</strong> Not an emergency-response authority. Real-world validation and qualified review remain mandatory blockers.<br>Source: repository gantt.md · Rebuild after source updates for production.</footer>
+    </main>
+    <noscript><p>JavaScript is required to render the schedule. Read gantt.md in the repository for the full plan.</p></noscript>
+    <script type="module" src="/src/gantt.ts"></script>
+  </body>
+</html>

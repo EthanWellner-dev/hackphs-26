@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 
 export const MAX_PARTICLES = 1600;
-const WIND_COUNT = 110;
-const WIND_STEPS = 28;
+export const WIND_COUNT = 48;
+const WIND_STEPS = 24;
+const WIND_FPS = 20;
 const METERS_PER_DEGREE = 111320;
 const PALETTE = ['#1767ff', '#00d9fa', '#ffe32b', '#fa263f'];
 const finite = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -140,8 +141,8 @@ export function buildWindField({ origin, weather = {}, windVectors = [], buildin
     const lines = [];
     for (let i = 0; i < WIND_COUNT; i++) {
         // Deterministic jitter avoids a rigid grid without changing seeds on frame/camera updates.
-        let x = ((i % 11) - 5) * 200 + Math.sin(i * 12.9898) * 38;
-        let y = (Math.floor(i / 11) - 4.5) * 220 + Math.cos(i * 7.233) * 38;
+        let x = ((i % 8) - 3.5) * 280 + Math.sin(i * 12.9898) * 38;
+        let y = (Math.floor(i / 8) - 2.5) * 400 + Math.cos(i * 7.233) * 38;
         const line = [];
         let distance = (i * 37) % 130;
         for (let step = 0; step <= WIND_STEPS; step++) {
@@ -187,12 +188,21 @@ export function buildPlumeSurface(points = [], buffers = createSurfaceBuffers())
         while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; }
         return i;
     };
-    // At most 1,279,200 cheap contact tests; no unbounded neighbor search.
-    for (let i = 0; i < valid.length; i++) {
-        for (let j = 0; j < i; j++) {
-            const a = valid[i], b = valid[j], radius = a.radius + b.radius;
+    // Sweep physical AABBs first. Sparse frames avoid the all-pairs contact scan;
+    // even fully overlapping input stays capped at 1,279,200 contact tests.
+    const order = valid.map((_, i) => i).sort((a, b) =>
+        (valid[a].x - valid[a].radius) - (valid[b].x - valid[b].radius));
+    let contactTests = 0;
+    for (let i = 0; i < order.length; i++) {
+        const a = valid[order[i]], right = a.x + a.radius;
+        for (let j = i + 1; j < order.length; j++) {
+            const b = valid[order[j]];
+            if (b.x - b.radius > right) break;
+            const radius = a.radius + b.radius;
+            if (Math.abs(a.y - b.y) > radius || Math.abs(a.z - b.z) > radius) continue;
+            contactTests++;
             if ((a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2 <= radius * radius) {
-                parent[root(i)] = root(j);
+                parent[root(order[i])] = root(order[j]);
             }
         }
     }
@@ -214,7 +224,7 @@ export function buildPlumeSurface(points = [], buffers = createSurfaceBuffers())
                 max[axis] = Math.max(max[axis], value + p.radius * SUPPORT);
             });
         }
-        clusters.push({ group, min, max, step: radius / 2 });
+        clusters.push({ group, min, max, step: radius / 3 });
     }
     const { positions, normals, colors, field } = buffers;
     let count = 0, sampleCount = 0, evaluations = 0;
@@ -328,7 +338,39 @@ export function buildPlumeSurface(points = [], buffers = createSurfaceBuffers())
             count = startCount; sparse.push(...group);
         } else mergedClusters++;
     }
-    return { ...buffers, vertexCount: count, sparse, mergedClusters, sampleCount, evaluations };
+    return { ...buffers, vertexCount: count, sparse, mergedClusters, sampleCount, evaluations, contactTests };
+}
+
+/** Three shares MapLibre's target: never clear it or leave write masks disabled.
+ * A depth prepass here would permanently occlude later map layers with invisible gas. */
+export function renderSharedContext(renderer, gl, draw) {
+    const framebuffer = gl.getParameter(gl.FRAMEBUFFER_BINDING);
+    const readFramebuffer = gl.getParameter(gl.READ_FRAMEBUFFER_BINDING);
+    const viewport = gl.getParameter(gl.VIEWPORT);
+    const depthRange = gl.getParameter(gl.DEPTH_RANGE);
+    const depthMask = gl.getParameter(gl.DEPTH_WRITEMASK);
+    const colorMask = gl.getParameter(gl.COLOR_WRITEMASK);
+    const scissor = gl.getParameter(gl.SCISSOR_BOX);
+    const scissorEnabled = gl.isEnabled(gl.SCISSOR_TEST);
+    const restoreTarget = () => {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+        gl.bindFramebuffer(gl.READ_FRAMEBUFFER, readFramebuffer);
+        gl.viewport(...viewport);
+        gl.depthRange(...depthRange);
+        gl.scissor(...scissor);
+        if (scissorEnabled) gl.enable(gl.SCISSOR_TEST);
+        else gl.disable(gl.SCISSOR_TEST);
+    };
+    renderer.resetState();
+    restoreTarget();
+    try {
+        draw();
+    } finally {
+        renderer.resetState();
+        restoreTarget();
+        gl.depthMask(depthMask);
+        gl.colorMask(...colorMask);
+    }
 }
 
 const sphereVertex = `
@@ -359,14 +401,12 @@ const sphereFragment = `
         vec3 view = normalize(eyeLocal - vPosition);
         float facing = clamp(abs(dot(normal, view)), 0.0, 1.0);
         // Inverse Fresnel fades the silhouette instead of outlining a solid shell.
-        float edge = smoothstep(0.0, 0.85, facing);
-        // Low-frequency incident-space variation: soft wisps, no screen-space grain,
-        // animated boiling, white highlights, or camera-dependent geometry.
-        vec3 p = vPosition * 0.045;
-        float wisp = 0.5 + 0.25 * sin(p.x + sin(p.z * 0.7))
-            + 0.25 * sin(p.y * 0.8 - p.z + sin(p.x * 0.6));
-        float alpha = 0.5 * edge * mix(0.82, 1.0, wisp);
-        vec3 color = vColor * mix(0.96, 1.0, wisp);
+        float edge = smoothstep(0.0, 0.7, facing);
+        // Gentle world-space shading keeps concentration hues, without hard rims,
+        // specular highlights or animated noise that makes gas look like plastic.
+        float light = 0.92 + 0.08 * max(dot(normal, normalize(vec3(-0.4, -0.3, 1.0))), 0.0);
+        float alpha = 0.38 * edge;
+        vec3 color = vColor * light;
         gl_FragColor = vec4(color, alpha);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
@@ -390,8 +430,11 @@ const windFragment = `
     varying float vSpeed;
     varying float vArrow;
     void main() {
-        if (vArrow < 0.5 && mod(vDistance - time * vSpeed, 90.0) > 52.0) discard;
-        gl_FragColor = vec4(0.55, 0.88, 1.0, 0.9);
+        float phase = mod(vDistance - time * vSpeed, 120.0);
+        float trail = smoothstep(0.0, 12.0, phase) * (1.0 - smoothstep(42.0, 64.0, phase));
+        float alpha = vArrow > 0.5 ? 0.3 : 0.24 * trail;
+        if (alpha < 0.01) discard;
+        gl_FragColor = vec4(0.64, 0.82, 0.88, alpha);
         #include <colorspace_fragment>
     }
 `;
@@ -401,7 +444,8 @@ const windFragment = `
  * setVisible(boolean) hides only the plume; wind remains visible. Contact groups get
  * smooth compact-support shells, isolated points retain physical-radius spheres.
  * CPU/GPU buffers are reused; only update()/debounced DEM events rebuild geometry.
- * A depth-only prepass selects the nearest shell: 50% maximum opacity, fading rims.
+ * Single-pass translucent shells preserve MapLibre's depth buffer; fading rims and
+ * smooth normals soften the boundary, which is a visualization, not a safety contour.
  * visualCutoffFraction defaults to 1% of TRACE and can be overridden in context;
  * zero disables this render-only filter. layer.visualFilter reports its metadata.
  * DEM and roof-following wind is approximate; no camera-dependent particle sizing. */
@@ -409,7 +453,8 @@ export function createPlumeLayer({ id = 'hazard-volume', maplibregl,
     visualCutoffFraction = DEFAULT_VISUAL_CUTOFF_FRACTION } = {}) {
     if (!maplibregl?.MercatorCoordinate) throw new Error('createPlumeLayer requires maplibregl.MercatorCoordinate');
     let map, renderer, scene, camera, spheres, surface, depthMaterial, wind, modelMatrix;
-    let frame, scenario, context, origin, timer, terrainTimer;
+    let frame, scenario, context, origin, timer, terrainTimer, windKey;
+    let terrainRevision = 0;
     let active = false, visible = true;
     const surfaceBuffers = createSurfaceBuffers();
     const transform = new THREE.Object3D();
@@ -536,7 +581,7 @@ export function createPlumeLayer({ id = 'hazard-volume', maplibregl,
             upload();
         },
         onAdd(nextMap, gl) {
-            map = nextMap; active = true;
+            map = nextMap; active = false;
             scene = new THREE.Scene(); camera = new THREE.Camera();
             renderer = new THREE.WebGLRenderer({ canvas: map.getCanvas(), context: gl, antialias: true });
             renderer.autoClear = false;
@@ -569,6 +614,7 @@ export function createPlumeLayer({ id = 'hazard-volume', maplibregl,
                 uniforms: { time: { value: 0 } }, side: THREE.DoubleSide, depthTest: true, depthWrite: false, transparent: true }));
             wind.frustumCulled = false; scene.add(wind);
             map.on('sourcedata', onTerrainData); map.on('terrain', onTerrainData);
+            active = true;
             upload(); animate();
         },
         render(gl, input) {

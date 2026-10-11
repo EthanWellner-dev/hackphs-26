@@ -163,7 +163,7 @@ describe('physical plume layer helpers', () => {
     it('generates bounded deterministic world paths above the supplied rendered DEM', () => {
         const options = { origin, weather: { windDirectionFromDegrees: 270, windSpeedMetersPerSecond: 5 }, ground: () => 240 };
         const field = buildWindField(options);
-        expect(field).toHaveLength(110);
+        expect(field).toHaveLength(48);
         expect(field).toEqual(buildWindField(options));
         expect(field.every(line => line.length <= 29 && line.every(point =>
             Math.abs(point.x) <= 1500 && Math.abs(point.y) <= 1500 && point.z === 246))).toBe(true);
