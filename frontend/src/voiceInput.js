@@ -38,7 +38,7 @@ export function createVoiceInput({ onState, onTranscript, transcribe, scope = gl
                 if (!Recognition) return await record();
                 recognition = new Recognition();
                 recognition.lang = 'en-US'; recognition.interimResults = true;
-                let finalText = '', failed = false;
+                let finalText = '', failed = false, fallbackToRecording = false;
                 recognition.onstart = () => state('listening', 'Listening — speak now. Click the microphone again to finish.');
                 recognition.onresult = event => {
                     let partial = '';
@@ -50,15 +50,30 @@ export function createVoiceInput({ onState, onTranscript, transcribe, scope = gl
                 };
                 recognition.onerror = event => {
                     failed = true;
+                    fallbackToRecording = event.error === 'network';
                     state('error', ['not-allowed', 'service-not-allowed'].includes(event.error)
                         ? 'Microphone or speech permission denied. Allow microphone access, or use Record audio below.'
-                        : 'Browser speech recognition failed (' + event.error + '). Use Record audio below.');
+                        : event.error === 'network'
+                            ? 'Browser speech recognition needs a speech service network connection. Use Record audio instead.'
+                            : 'Browser speech recognition failed (' + event.error + '). Use Record audio below.');
                 };
-                recognition.onend = () => {
-                    recognition = null; busy = false; clearTimeout(timer);
-                    if (cancelled) return;
-                    if (finalText.trim()) { onTranscript(finalText.trim()); state('idle', 'Transcript ready. Review and send.'); }
-                    else if (!failed) state('error', 'No speech detected. Retry or use Record audio below.');
+                recognition.onend = async () => {
+                    recognition = null; clearTimeout(timer);
+                    if (cancelled) { busy = false; return; }
+                    if (finalText.trim()) {
+                        busy = false;
+                        onTranscript(finalText.trim()); state('idle', 'Transcript ready. Review and send.');
+                    } else if (fallbackToRecording) {
+                        state('requesting', 'Browser speech service is unavailable. Starting audio recording instead…');
+                        try { await record(); }
+                        catch (error) {
+                            busy = false; release();
+                            state('error', error.name === 'NotAllowedError' ? 'Microphone access denied. Enable it in browser/site permissions and retry.' : error.message);
+                        }
+                    } else {
+                        busy = false;
+                        state('error', 'No speech detected. Retry or use Record audio below.');
+                    }
                 };
                 state('requesting', 'Waiting for microphone permission…');
                 recognition.start();

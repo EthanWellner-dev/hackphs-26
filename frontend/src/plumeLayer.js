@@ -441,8 +441,8 @@ const windFragment = `
 
 /** Mercator-only custom layer. Add after terrain/building layers for shared depth occlusion.
  * update(frame, scenario, context) accepts AGL particle meters and context.buildings.
- * setVisible(boolean) hides only the plume; wind remains visible. Contact groups get
- * smooth compact-support shells, isolated points retain physical-radius spheres.
+ * setVisible(boolean) hides only the plume; wind remains visible. Every retained
+ * parcel gets its own physical-radius sphere, including overlapping parcels.
  * CPU/GPU buffers are reused; only update()/debounced DEM events rebuild geometry.
  * Single-pass translucent shells preserve MapLibre's depth buffer; fading rims and
  * smooth normals soften the boundary, which is a visualization, not a safety contour.
@@ -452,11 +452,10 @@ const windFragment = `
 export function createPlumeLayer({ id = 'hazard-volume', maplibregl,
     visualCutoffFraction = DEFAULT_VISUAL_CUTOFF_FRACTION } = {}) {
     if (!maplibregl?.MercatorCoordinate) throw new Error('createPlumeLayer requires maplibregl.MercatorCoordinate');
-    let map, renderer, scene, camera, spheres, surface, depthMaterial, wind, modelMatrix;
+    let map, renderer, scene, camera, spheres, wind, modelMatrix;
     let frame, scenario, context, origin, timer, terrainTimer, windKey;
     let terrainRevision = 0;
     let active = false, visible = true;
-    const surfaceBuffers = createSurfaceBuffers();
     const transform = new THREE.Object3D();
     const color = new THREE.Color();
     const inverse = new THREE.Matrix4();
@@ -492,23 +491,16 @@ export function createPlumeLayer({ id = 'hazard-volume', maplibregl,
                 color: [color.r, color.g, color.b],
             };
         });
-        const mesh = buildPlumeSurface(points, surfaceBuffers);
-        mesh.sparse.forEach((point, i) => {
+        points.forEach((point, i) => {
             transform.position.set(point.x, point.y, point.z);
             transform.scale.setScalar(point.radius);
             transform.updateMatrix();
             spheres.setMatrixAt(i, transform.matrix);
             spheres.setColorAt(i, color.fromArray(point.color));
         });
-        surface.geometry.setDrawRange(0, mesh.vertexCount);
-        Object.values(surface.geometry.attributes).forEach(attribute => {
-            attribute.clearUpdateRanges();
-            attribute.addUpdateRange(0, mesh.vertexCount * 3);
-            attribute.needsUpdate = true;
-        });
-        layer.mergedClusterCount = mesh.mergedClusters;
-        layer.surfaceVertexCount = mesh.vertexCount;
-        spheres.count = mesh.sparse.length;
+        layer.mergedClusterCount = 0;
+        layer.surfaceVertexCount = 0;
+        spheres.count = points.length;
         spheres.instanceMatrix.needsUpdate = true;
         if (spheres.instanceColor) spheres.instanceColor.needsUpdate = true;
         const lines = buildWindField({ origin, weather: scenario?.weather || context?.weather, windVectors: frame.windVectors,
@@ -562,7 +554,6 @@ export function createPlumeLayer({ id = 'hazard-volume', maplibregl,
         setVisible(nextVisible) {
             visible = Boolean(nextVisible);
             if (spheres) spheres.visible = visible;
-            if (surface) surface.visible = visible;
             map?.triggerRepaint();
         },
         update(nextFrame, nextScenario, nextContext) {
@@ -571,7 +562,6 @@ export function createPlumeLayer({ id = 'hazard-volume', maplibregl,
             origin = location && Number.isFinite(location.longitude) && Number.isFinite(location.latitude) ? location : null;
             if (!frame || !origin) {
                 if (spheres) spheres.count = 0;
-                if (surface) surface.geometry.setDrawRange(0, 0);
                 if (wind) wind.geometry.setDrawRange(0, 0);
                 layer.particleCount = 0; layer.windLineCount = 0;
                 layer.mergedClusterCount = 0; layer.surfaceVertexCount = 0; layer.visualFilter = null;
@@ -588,17 +578,6 @@ export function createPlumeLayer({ id = 'hazard-volume', maplibregl,
             const material = new THREE.ShaderMaterial({ vertexShader: sphereVertex, fragmentShader: sphereFragment,
                 uniforms: { eyeLocal: { value: new THREE.Vector3() } }, depthTest: true, depthWrite: false,
                 transparent: true, vertexColors: true, blending: THREE.NormalBlending });
-            // Nearest-surface depth prepass makes overlap remain 50%, not near-opaque.
-            depthMaterial = new THREE.ShaderMaterial({ vertexShader: sphereVertex,
-                fragmentShader: 'void main() { gl_FragColor = vec4(0.0); }', vertexColors: true,
-                colorWrite: false, depthWrite: true, depthTest: true });
-            const surfaceGeometry = new THREE.BufferGeometry();
-            for (const [name, array] of [['position', surfaceBuffers.positions], ['normal', surfaceBuffers.normals], ['color', surfaceBuffers.colors]]) {
-                surfaceGeometry.setAttribute(name, new THREE.BufferAttribute(array, 3).setUsage(THREE.DynamicDrawUsage));
-            }
-            surfaceGeometry.setDrawRange(0, 0);
-            surface = new THREE.Mesh(surfaceGeometry, material);
-            surface.visible = visible; surface.frustumCulled = false; scene.add(surface);
             spheres = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 20, 14), material, MAX_PARTICLES);
             spheres.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
             // Allocate instanceColor even when the initial frame is empty.
@@ -634,13 +613,6 @@ export function createPlumeLayer({ id = 'hazard-volume', maplibregl,
             gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
             gl.viewport(...viewport);
             gl.depthRange(...depthRange);
-            if (visible) {
-                wind.visible = false;
-                scene.overrideMaterial = depthMaterial;
-                renderer.render(scene, camera);
-                scene.overrideMaterial = null;
-                wind.visible = true;
-            }
             renderer.render(scene, camera);
             renderer.resetState();
             gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
@@ -651,7 +623,6 @@ export function createPlumeLayer({ id = 'hazard-volume', maplibregl,
             active = false; clearTimeout(timer); clearTimeout(terrainTimer);
             map?.off('sourcedata', onTerrainData); map?.off('terrain', onTerrainData);
             spheres?.geometry.dispose(); spheres?.material.dispose(); spheres?.dispose();
-            surface?.geometry.dispose(); depthMaterial?.dispose();
             wind?.geometry.dispose(); wind?.material.dispose();
             renderer?.dispose();
             // Never forceContextLoss(): the WebGL context belongs to MapLibre.

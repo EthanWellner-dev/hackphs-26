@@ -7,7 +7,7 @@ const mapWorkerUrl = '/maplibre-gl-worker.mjs';
 import { loadMapStyle, searchPlaces, deploymentLocation } from './mapRequests.js';
 import { submitDispatch } from './aiDispatch.ts';
 maplibregl.setWorkerUrl(mapWorkerUrl);
-import { createPlumeLayer } from './plumeLayer.js';
+import { createPlumeLayer, selectVisibleParticles } from './plumeLayer.js';
 import { ForecastPlayback } from './playback.js';
 import { exposureCsv, downloadBlob, downloadMapImage, recordMapVideo } from './exports.js';
 import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, mergeWeatherTimeline } from './timeline.js';
@@ -145,7 +145,7 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
                     addSourcePin();
                     addAffectedPropertyLayer();
                     addExposureLayers();
-                    plumeLayer = createPlumeLayer({ maplibregl, visualCutoffFraction: 0 });
+                    plumeLayer = createPlumeLayer({ maplibregl });
                     map.addLayer(plumeLayer);
                     map.on('rotate', updateWindBadge);
                     showToast("Princeton Middle School map ready. Terrain and 3D chlorine plume loaded.");
@@ -284,7 +284,8 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
             plumeLayer?.update(frame, scenario, contextSnapshot);
             plumeLayer?.setVisible?.(!exposureMode);
             if (document.getElementById('forecast-follow').checked && !fallback && frame.particles?.length && map?.isStyleLoaded()) {
-                const points = frame.particles.filter(p => p.concentration > 0);
+                const points = selectVisibleParticles(frame.particles, frame.thresholds || scenario?.hazard,
+                    contextSnapshot?.visualCutoffFraction).particles;
                 if (points.length) {
                     const bounds = new maplibregl.LngLatBounds();
                     for (const p of points) bounds.extend([p.longitude, p.latitude]);
@@ -292,7 +293,10 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
                 }
             }
             const mode = document.getElementById('plume-mode');
-            if (mode) mode.textContent = fallback ? 'Simulation unavailable' : '3D forecast ? low-concentration parcels retained ? not a safety boundary';
+            const visual = selectVisibleParticles(frame.particles, frame.thresholds || scenario?.hazard,
+                contextSnapshot?.visualCutoffFraction);
+            if (mode) mode.textContent = fallback ? 'Simulation unavailable'
+                : `${visual.particles.length} / ${frame.particles?.length || 0} particles visible · hide below ${formatConcentration(visual.cutoffConcentration, frame.concentrationUnit || scenario?.hazard?.concentrationUnit || 'ppm')} · not a safety boundary`;
         }
 
         async function loadBackendData() {

@@ -42,62 +42,8 @@
       "value": 29.8704
     },
     "forecastGenerator": "HourlyForecastGenerator",
-    "generatedAt": "2026-10-11T11:22:28+00:00",
+    "generatedAt": "2026-10-11T13:29:00+00:00",
     "periods": [
-      {
-        "detailedForecast": "",
-        "dewpoint": {
-          "unitCode": "wmoUnit:degC",
-          "value": 13.88888888888889
-        },
-        "endTime": "2026-10-11T08:00:00-04:00",
-        "icon": "https://api.weather.gov/icons/land/day/bkn?size=small",
-        "isDaytime": true,
-        "name": "",
-        "number": 1,
-        "probabilityOfPrecipitation": {
-          "unitCode": "wmoUnit:percent",
-          "value": 7
-        },
-        "relativeHumidity": {
-          "unitCode": "wmoUnit:percent",
-          "value": 96
-        },
-        "shortForecast": "Mostly Cloudy",
-        "startTime": "2026-10-11T07:00:00-04:00",
-        "temperature": 58,
-        "temperatureTrend": null,
-        "temperatureUnit": "F",
-        "windDirection": "E",
-        "windSpeed": "5 mph"
-      },
-      {
-        "detailedForecast": "",
-        "dewpoint": {
-          "unitCode": "wmoUnit:degC",
-          "value": 14.444444444444445
-        },
-        "endTime": "2026-10-11T09:00:00-04:00",
-        "icon": "https://api.weather.gov/icons/land/day/rain,40?size=small",
-        "isDaytime": true,
-        "name": "",
-        "number": 2,
-        "probabilityOfPrecipitation": {
-          "unitCode": "wmoUnit:percent",
-          "value": 41
-        },
-        "relativeHumidity": {
-          "unitCode": "wmoUnit:percent",
-          "value": 96
-        },
-        "shortForecast": "Chance Light Rain",
-        "startTime": "2026-10-11T08:00:00-04:00",
-        "temperature": 59,
-        "temperatureTrend": null,
-        "temperatureUnit": "F",
-        "windDirection": "E",
-        "windSpeed": "5 mph"
-      },
       {
         "detailedForecast": "",
         "dewpoint": {
@@ -108,7 +54,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain,60?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 3,
+        "number": 1,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 60
@@ -135,7 +81,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain,80?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 4,
+        "number": 2,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 81
@@ -162,7 +108,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain,100?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 5,
+        "number": 3,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 96
@@ -189,7 +135,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain,90?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 6,
+        "number": 4,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 94
@@ -216,7 +162,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain,90?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 7,
+        "number": 5,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 86
@@ -243,7 +189,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain,80?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 8,
+        "number": 6,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 84
@@ -270,7 +216,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain,100?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 9,
+        "number": 7,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 100
@@ -297,7 +243,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain,100?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 10,
+        "number": 8,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 98
@@ -324,7 +270,7 @@
         "icon": "https://api.weather.gov/icons/land/day/tsra,90?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 11,
+        "number": 9,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 92
@@ -351,7 +297,7 @@
         "icon": "https://api.weather.gov/icons/land/night/tsra,90?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 12,
+        "number": 10,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 89
@@ -378,7 +324,7 @@
         "icon": "https://api.weather.gov/icons/land/night/tsra,80?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 13,
+        "number": 11,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 75
@@ -405,7 +351,7 @@
         "icon": "https://api.weather.gov/icons/land/night/tsra,60?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 14,
+        "number": 12,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 64
@@ -432,7 +378,7 @@
         "icon": "https://api.weather.gov/icons/land/night/tsra,70?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 15,
+        "number": 13,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 65
@@ -459,7 +405,7 @@
         "icon": "https://api.weather.gov/icons/land/night/tsra,80?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 16,
+        "number": 14,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 78
@@ -486,7 +432,7 @@
         "icon": "https://api.weather.gov/icons/land/night/tsra,80?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 17,
+        "number": 15,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 76
@@ -513,7 +459,7 @@
         "icon": "https://api.weather.gov/icons/land/night/tsra,50?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 18,
+        "number": 16,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 52
@@ -540,7 +486,7 @@
         "icon": "https://api.weather.gov/icons/land/night/tsra,40?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 19,
+        "number": 17,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 35
@@ -567,7 +513,7 @@
         "icon": "https://api.weather.gov/icons/land/night/tsra,30?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 20,
+        "number": 18,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 27
@@ -594,7 +540,7 @@
         "icon": "https://api.weather.gov/icons/land/night/tsra,30?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 21,
+        "number": 19,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 34
@@ -621,7 +567,7 @@
         "icon": "https://api.weather.gov/icons/land/night/tsra,40?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 22,
+        "number": 20,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 41
@@ -648,7 +594,7 @@
         "icon": "https://api.weather.gov/icons/land/night/tsra,40?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 23,
+        "number": 21,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 43
@@ -675,7 +621,7 @@
         "icon": "https://api.weather.gov/icons/land/day/tsra,40?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 24,
+        "number": 22,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 36
@@ -702,7 +648,7 @@
         "icon": "https://api.weather.gov/icons/land/day/tsra,50?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 25,
+        "number": 23,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 47
@@ -729,7 +675,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,20?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 26,
+        "number": 24,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 24
@@ -756,7 +702,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,20?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 27,
+        "number": 25,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 18
@@ -783,7 +729,7 @@
         "icon": "https://api.weather.gov/icons/land/day/bkn?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 28,
+        "number": 26,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 0
@@ -810,7 +756,7 @@
         "icon": "https://api.weather.gov/icons/land/day/bkn?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 29,
+        "number": 27,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 0
@@ -837,7 +783,7 @@
         "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 30,
+        "number": 28,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 0
@@ -864,7 +810,7 @@
         "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 31,
+        "number": 29,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 0
@@ -891,7 +837,7 @@
         "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 32,
+        "number": 30,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 0
@@ -918,7 +864,7 @@
         "icon": "https://api.weather.gov/icons/land/day/few?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 33,
+        "number": 31,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 0
@@ -945,7 +891,7 @@
         "icon": "https://api.weather.gov/icons/land/day/few?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 34,
+        "number": 32,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 0
@@ -972,7 +918,7 @@
         "icon": "https://api.weather.gov/icons/land/day/few?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 35,
+        "number": 33,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 0
@@ -999,7 +945,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 36,
+        "number": 34,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 0
@@ -1026,7 +972,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 37,
+        "number": 35,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 0
@@ -1053,7 +999,7 @@
         "icon": "https://api.weather.gov/icons/land/night/sct?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 38,
+        "number": 36,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 0
@@ -1080,7 +1026,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 39,
+        "number": 37,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 0
@@ -1107,7 +1053,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 40,
+        "number": 38,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 0
@@ -1134,7 +1080,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 41,
+        "number": 39,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 0
@@ -1161,7 +1107,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 42,
+        "number": 40,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 0
@@ -1188,7 +1134,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 43,
+        "number": 41,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 0
@@ -1215,7 +1161,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 44,
+        "number": 42,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 0
@@ -1242,7 +1188,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 45,
+        "number": 43,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 0
@@ -1269,7 +1215,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 46,
+        "number": 44,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 0
@@ -1296,7 +1242,7 @@
         "icon": "https://api.weather.gov/icons/land/night/sct?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 47,
+        "number": 45,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 0
@@ -1323,7 +1269,7 @@
         "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 48,
+        "number": 46,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 0
@@ -1350,7 +1296,7 @@
         "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 49,
+        "number": 47,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 0
@@ -1377,7 +1323,7 @@
         "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 50,
+        "number": 48,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 1
@@ -1404,7 +1350,7 @@
         "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 51,
+        "number": 49,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 1
@@ -1431,7 +1377,7 @@
         "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 52,
+        "number": 50,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 1
@@ -1458,7 +1404,7 @@
         "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 53,
+        "number": 51,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 1
@@ -1485,7 +1431,7 @@
         "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 54,
+        "number": 52,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 1
@@ -1512,7 +1458,7 @@
         "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 55,
+        "number": 53,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 1
@@ -1539,7 +1485,7 @@
         "icon": "https://api.weather.gov/icons/land/day/few?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 56,
+        "number": 54,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 2
@@ -1566,7 +1512,7 @@
         "icon": "https://api.weather.gov/icons/land/day/few?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 57,
+        "number": 55,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 2
@@ -1593,7 +1539,7 @@
         "icon": "https://api.weather.gov/icons/land/day/few?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 58,
+        "number": 56,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 2
@@ -1620,7 +1566,7 @@
         "icon": "https://api.weather.gov/icons/land/day/few?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 59,
+        "number": 57,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 2
@@ -1647,7 +1593,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 60,
+        "number": 58,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 2
@@ -1674,7 +1620,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 61,
+        "number": 59,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 2
@@ -1701,7 +1647,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 62,
+        "number": 60,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 9
@@ -1728,7 +1674,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 63,
+        "number": 61,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 9
@@ -1755,7 +1701,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 64,
+        "number": 62,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 9
@@ -1782,7 +1728,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 65,
+        "number": 63,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 9
@@ -1809,7 +1755,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 66,
+        "number": 64,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 9
@@ -1836,7 +1782,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 67,
+        "number": 65,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 9
@@ -1863,7 +1809,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 68,
+        "number": 66,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 3
@@ -1890,7 +1836,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 69,
+        "number": 67,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 3
@@ -1917,7 +1863,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 70,
+        "number": 68,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 3
@@ -1944,7 +1890,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 71,
+        "number": 69,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 3
@@ -1971,7 +1917,7 @@
         "icon": "https://api.weather.gov/icons/land/day/few?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 72,
+        "number": 70,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 3
@@ -1998,7 +1944,7 @@
         "icon": "https://api.weather.gov/icons/land/day/few?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 73,
+        "number": 71,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 3
@@ -2025,7 +1971,7 @@
         "icon": "https://api.weather.gov/icons/land/day/few?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 74,
+        "number": 72,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 3
@@ -2052,7 +1998,7 @@
         "icon": "https://api.weather.gov/icons/land/day/few?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 75,
+        "number": 73,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 3
@@ -2079,7 +2025,7 @@
         "icon": "https://api.weather.gov/icons/land/day/few?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 76,
+        "number": 74,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 3
@@ -2106,7 +2052,7 @@
         "icon": "https://api.weather.gov/icons/land/day/few?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 77,
+        "number": 75,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 3
@@ -2133,7 +2079,7 @@
         "icon": "https://api.weather.gov/icons/land/day/few?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 78,
+        "number": 76,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 3
@@ -2160,7 +2106,7 @@
         "icon": "https://api.weather.gov/icons/land/day/few?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 79,
+        "number": 77,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 3
@@ -2187,7 +2133,7 @@
         "icon": "https://api.weather.gov/icons/land/day/few?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 80,
+        "number": 78,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 2
@@ -2214,7 +2160,7 @@
         "icon": "https://api.weather.gov/icons/land/day/few?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 81,
+        "number": 79,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 2
@@ -2241,7 +2187,7 @@
         "icon": "https://api.weather.gov/icons/land/day/few?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 82,
+        "number": 80,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 2
@@ -2268,7 +2214,7 @@
         "icon": "https://api.weather.gov/icons/land/day/few?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 83,
+        "number": 81,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 2
@@ -2295,7 +2241,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 84,
+        "number": 82,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 2
@@ -2322,7 +2268,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 85,
+        "number": 83,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 2
@@ -2349,7 +2295,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 86,
+        "number": 84,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 10
@@ -2376,7 +2322,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 87,
+        "number": 85,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 10
@@ -2403,7 +2349,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 88,
+        "number": 86,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 10
@@ -2430,7 +2376,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 89,
+        "number": 87,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 10
@@ -2457,7 +2403,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 90,
+        "number": 88,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 10
@@ -2484,7 +2430,7 @@
         "icon": "https://api.weather.gov/icons/land/night/few?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 91,
+        "number": 89,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 10
@@ -2511,7 +2457,7 @@
         "icon": "https://api.weather.gov/icons/land/night/sct?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 92,
+        "number": 90,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 9
@@ -2538,7 +2484,7 @@
         "icon": "https://api.weather.gov/icons/land/night/sct?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 93,
+        "number": 91,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 9
@@ -2565,7 +2511,7 @@
         "icon": "https://api.weather.gov/icons/land/night/sct?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 94,
+        "number": 92,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 9
@@ -2592,7 +2538,7 @@
         "icon": "https://api.weather.gov/icons/land/night/sct?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 95,
+        "number": 93,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 9
@@ -2619,7 +2565,7 @@
         "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 96,
+        "number": 94,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 9
@@ -2646,7 +2592,7 @@
         "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 97,
+        "number": 95,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 9
@@ -2673,7 +2619,7 @@
         "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 98,
+        "number": 96,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 4
@@ -2700,7 +2646,7 @@
         "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 99,
+        "number": 97,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 4
@@ -2727,7 +2673,7 @@
         "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 100,
+        "number": 98,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 4
@@ -2754,7 +2700,7 @@
         "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 101,
+        "number": 99,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 4
@@ -2781,7 +2727,7 @@
         "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 102,
+        "number": 100,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 4
@@ -2808,7 +2754,7 @@
         "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 103,
+        "number": 101,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 4
@@ -2835,7 +2781,7 @@
         "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 104,
+        "number": 102,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 2
@@ -2862,7 +2808,7 @@
         "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 105,
+        "number": 103,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 2
@@ -2889,7 +2835,7 @@
         "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 106,
+        "number": 104,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 2
@@ -2916,7 +2862,7 @@
         "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 107,
+        "number": 105,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 2
@@ -2943,7 +2889,7 @@
         "icon": "https://api.weather.gov/icons/land/night/sct?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 108,
+        "number": 106,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 2
@@ -2970,7 +2916,7 @@
         "icon": "https://api.weather.gov/icons/land/night/sct?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 109,
+        "number": 107,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 2
@@ -2997,7 +2943,7 @@
         "icon": "https://api.weather.gov/icons/land/night/sct?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 110,
+        "number": 108,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 5
@@ -3024,7 +2970,7 @@
         "icon": "https://api.weather.gov/icons/land/night/sct?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 111,
+        "number": 109,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 5
@@ -3051,7 +2997,7 @@
         "icon": "https://api.weather.gov/icons/land/night/sct?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 112,
+        "number": 110,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 5
@@ -3078,7 +3024,7 @@
         "icon": "https://api.weather.gov/icons/land/night/sct?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 113,
+        "number": 111,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 5
@@ -3105,7 +3051,7 @@
         "icon": "https://api.weather.gov/icons/land/night/sct?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 114,
+        "number": 112,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 5
@@ -3132,7 +3078,7 @@
         "icon": "https://api.weather.gov/icons/land/night/sct?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 115,
+        "number": 113,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 5
@@ -3159,7 +3105,7 @@
         "icon": "https://api.weather.gov/icons/land/night/rain_showers,20?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 116,
+        "number": 114,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 22
@@ -3186,7 +3132,7 @@
         "icon": "https://api.weather.gov/icons/land/night/rain_showers,20?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 117,
+        "number": 115,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 22
@@ -3213,7 +3159,7 @@
         "icon": "https://api.weather.gov/icons/land/night/rain_showers,20?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 118,
+        "number": 116,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 22
@@ -3240,7 +3186,7 @@
         "icon": "https://api.weather.gov/icons/land/night/rain_showers,20?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 119,
+        "number": 117,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 22
@@ -3267,7 +3213,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,20?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 120,
+        "number": 118,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 22
@@ -3294,7 +3240,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,20?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 121,
+        "number": 119,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 22
@@ -3321,7 +3267,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,50?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 122,
+        "number": 120,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 53
@@ -3348,7 +3294,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,50?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 123,
+        "number": 121,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 53
@@ -3375,7 +3321,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,50?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 124,
+        "number": 122,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 53
@@ -3402,7 +3348,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,50?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 125,
+        "number": 123,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 53
@@ -3429,7 +3375,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,50?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 126,
+        "number": 124,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 53
@@ -3456,7 +3402,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,50?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 127,
+        "number": 125,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 53
@@ -3483,7 +3429,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,40?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 128,
+        "number": 126,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 42
@@ -3510,7 +3456,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,40?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 129,
+        "number": 127,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 42
@@ -3537,7 +3483,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,40?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 130,
+        "number": 128,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 42
@@ -3564,7 +3510,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,40?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 131,
+        "number": 129,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 42
@@ -3591,7 +3537,7 @@
         "icon": "https://api.weather.gov/icons/land/night/rain_showers,40?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 132,
+        "number": 130,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 42
@@ -3618,7 +3564,7 @@
         "icon": "https://api.weather.gov/icons/land/night/rain_showers,40?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 133,
+        "number": 131,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 42
@@ -3645,7 +3591,7 @@
         "icon": "https://api.weather.gov/icons/land/night/rain_showers,40?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 134,
+        "number": 132,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 37
@@ -3672,7 +3618,7 @@
         "icon": "https://api.weather.gov/icons/land/night/rain_showers,40?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 135,
+        "number": 133,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 37
@@ -3699,7 +3645,7 @@
         "icon": "https://api.weather.gov/icons/land/night/rain_showers,40?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 136,
+        "number": 134,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 37
@@ -3726,7 +3672,7 @@
         "icon": "https://api.weather.gov/icons/land/night/rain_showers,40?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 137,
+        "number": 135,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 37
@@ -3753,7 +3699,7 @@
         "icon": "https://api.weather.gov/icons/land/night/rain_showers,40?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 138,
+        "number": 136,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 37
@@ -3780,7 +3726,7 @@
         "icon": "https://api.weather.gov/icons/land/night/rain_showers,40?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 139,
+        "number": 137,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 37
@@ -3807,7 +3753,7 @@
         "icon": "https://api.weather.gov/icons/land/night/rain_showers,30?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 140,
+        "number": 138,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 26
@@ -3834,7 +3780,7 @@
         "icon": "https://api.weather.gov/icons/land/night/rain_showers,30?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 141,
+        "number": 139,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 26
@@ -3861,7 +3807,7 @@
         "icon": "https://api.weather.gov/icons/land/night/rain_showers,30?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 142,
+        "number": 140,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 26
@@ -3888,7 +3834,7 @@
         "icon": "https://api.weather.gov/icons/land/night/rain_showers,30?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 143,
+        "number": 141,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 26
@@ -3915,7 +3861,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,30?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 144,
+        "number": 142,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 26
@@ -3942,7 +3888,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,30?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 145,
+        "number": 143,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 26
@@ -3969,7 +3915,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,20?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 146,
+        "number": 144,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 19
@@ -3996,7 +3942,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,20?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 147,
+        "number": 145,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 19
@@ -4023,7 +3969,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,20?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 148,
+        "number": 146,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 19
@@ -4050,7 +3996,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,20?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 149,
+        "number": 147,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 19
@@ -4077,7 +4023,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,20?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 150,
+        "number": 148,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 19
@@ -4104,7 +4050,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,20?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 151,
+        "number": 149,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 19
@@ -4131,7 +4077,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,20?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 152,
+        "number": 150,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 22
@@ -4158,7 +4104,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,20?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 153,
+        "number": 151,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 22
@@ -4185,7 +4131,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,20?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 154,
+        "number": 152,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 22
@@ -4212,7 +4158,7 @@
         "icon": "https://api.weather.gov/icons/land/day/rain_showers,20?size=small",
         "isDaytime": true,
         "name": "",
-        "number": 155,
+        "number": 153,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 22
@@ -4239,7 +4185,7 @@
         "icon": "https://api.weather.gov/icons/land/night/rain_showers,20?size=small",
         "isDaytime": false,
         "name": "",
-        "number": 156,
+        "number": 154,
         "probabilityOfPrecipitation": {
           "unitCode": "wmoUnit:percent",
           "value": 22
@@ -4251,6 +4197,60 @@
         "shortForecast": "Slight Chance Rain Showers",
         "startTime": "2026-10-17T18:00:00-04:00",
         "temperature": 55,
+        "temperatureTrend": null,
+        "temperatureUnit": "F",
+        "windDirection": "NW",
+        "windSpeed": "10 mph"
+      },
+      {
+        "detailedForecast": "",
+        "dewpoint": {
+          "unitCode": "wmoUnit:degC",
+          "value": 4.444444444444445
+        },
+        "endTime": "2026-10-17T20:00:00-04:00",
+        "icon": "https://api.weather.gov/icons/land/night/rain_showers,20?size=small",
+        "isDaytime": false,
+        "name": "",
+        "number": 155,
+        "probabilityOfPrecipitation": {
+          "unitCode": "wmoUnit:percent",
+          "value": 22
+        },
+        "relativeHumidity": {
+          "unitCode": "wmoUnit:percent",
+          "value": 63
+        },
+        "shortForecast": "Slight Chance Rain Showers",
+        "startTime": "2026-10-17T19:00:00-04:00",
+        "temperature": 52,
+        "temperatureTrend": null,
+        "temperatureUnit": "F",
+        "windDirection": "NW",
+        "windSpeed": "10 mph"
+      },
+      {
+        "detailedForecast": "",
+        "dewpoint": {
+          "unitCode": "wmoUnit:degC",
+          "value": 4.444444444444445
+        },
+        "endTime": "2026-10-17T21:00:00-04:00",
+        "icon": "https://api.weather.gov/icons/land/night/bkn?size=small",
+        "isDaytime": false,
+        "name": "",
+        "number": 156,
+        "probabilityOfPrecipitation": {
+          "unitCode": "wmoUnit:percent",
+          "value": 10
+        },
+        "relativeHumidity": {
+          "unitCode": "wmoUnit:percent",
+          "value": 71
+        },
+        "shortForecast": "Mostly Cloudy",
+        "startTime": "2026-10-17T20:00:00-04:00",
+        "temperature": 49,
         "temperatureTrend": null,
         "temperatureUnit": "F",
         "windDirection": "NW",
