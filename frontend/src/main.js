@@ -179,7 +179,7 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
         function addAffectedPropertyLayer() {
             if (!map || map.getSource('affected-properties')) return;
             map.addSource('affected-properties', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-            map.addLayer({ id: 'affected-properties-fill', type: 'fill-extrusion', minzoom: BUILDING_MIN_ZOOM, source: 'affected-properties', paint: { 'fill-extrusion-color': ['get', 'color'], 'fill-extrusion-height': 8, 'fill-extrusion-opacity': 0.45 } });
+            map.addLayer({ id: 'affected-properties-fill', type: 'fill-extrusion', minzoom: BUILDING_MIN_ZOOM, source: 'affected-properties', paint: { 'fill-extrusion-color': ['get', 'color'], 'fill-extrusion-height': ['get', 'height'], 'fill-extrusion-opacity': 0.85 } });
         }
 
         function addExposureLayers() {
@@ -296,7 +296,7 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
             const visual = selectVisibleParticles(frame.particles, frame.thresholds || scenario?.hazard,
                 contextSnapshot?.visualCutoffFraction);
             if (mode) mode.textContent = fallback ? 'Simulation unavailable'
-                : `${visual.particles.length} / ${frame.particles?.length || 0} particles visible · hide below ${formatConcentration(visual.cutoffConcentration, frame.concentrationUnit || scenario?.hazard?.concentrationUnit || 'ppm')} · not a safety boundary`;
+                : `${visual.particles.length} / ${frame.particles?.length || 0} particles visible · red = nearer source · hide below ${formatConcentration(visual.cutoffConcentration, frame.concentrationUnit || scenario?.hazard?.concentrationUnit || 'ppm')} · not a safety boundary`;
         }
 
         async function loadBackendData() {
@@ -566,18 +566,22 @@ import { TimelineFrames, timelineMinute, formatConcentration, releaseMass, merge
             const list = document.getElementById('affected-list');
             if (!list) return;
             list.replaceChildren();
-            const properties = frame?.buildingContamination || [];
+            const properties = [...(frame?.buildingContamination || [])].sort((a, b) => b.concentration - a.concentration);
             if (!properties.length) list.textContent = 'No modeled property exposure data for this frame.';
-            for (const item of properties.slice(0, 5)) {
+            for (const item of properties.slice(0, 8)) {
                 const row = document.createElement('span');
-                row.textContent = (item.band || 'UNKNOWN') + ' / ' + item.displayName + ' / ' + formatConcentration(item.concentration, frame?.concentrationUnit || 'ppm');
+                const known = item.concentration != null && Number.isFinite(Number(item.concentration));
+                const band = item.band === 'UNKNOWN' && known ? 'BELOW TRACE' : (item.band || 'UNAVAILABLE');
+                row.textContent = band + ' / ' + item.displayName + ' / ' + formatConcentration(item.concentration, frame?.concentrationUnit || 'ppm') + ` · T+${frame.timeMinutes} min`;
+                row.style.borderLeft = `3px solid ${item.affectedColor || '#64748b'}`;
+                row.style.paddingLeft = '6px';
                 list.appendChild(row);
             }
             const source = map?.getSource('affected-properties');
             if (source) source.setData({ type: 'FeatureCollection', features: properties.filter(item => Array.isArray(item.polygon) && item.polygon.length >= 3).map(item => {
                 const ring = [...item.polygon];
                 if (String(ring[0]) !== String(ring[ring.length - 1])) ring.push(ring[0]);
-                return { type: 'Feature', properties: { color: item.affectedColor || '#43a8ff' }, geometry: { type: 'Polygon', coordinates: [ring] } };
+                return { type: 'Feature', properties: { color: item.affectedColor || '#64748b', height: Math.max(5, (Number(item.levels) || 2) * 3) }, geometry: { type: 'Polygon', coordinates: [ring] } };
             }) });
         }
 

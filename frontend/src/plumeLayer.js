@@ -25,6 +25,13 @@ export function concentrationColor(concentration, thresholds = {}) {
     }).join('')}`;
 }
 
+export function proximityColor(particle, source) {
+    const north = (particle.latitude - source.latitude) * METERS_PER_DEGREE;
+    const east = (particle.longitude - source.longitude) * METERS_PER_DEGREE * Math.cos(source.latitude * Math.PI / 180);
+    const distance = Math.hypot(east, north);
+    return concentrationColor(Math.max(0, 10 * (1 - distance / 1500)), { trace: 1, pel: 5, idlh: 10 });
+}
+
 export function transportVector(weather = {}) {
     const bearing = (finite(weather.windDirectionFromDegrees, 225) + 180) * Math.PI / 180;
     const speed = Math.max(0, finite(weather.windSpeedMetersPerSecond, 4.5));
@@ -484,7 +491,7 @@ export function createPlumeLayer({ id = 'hazard-volume', maplibregl,
         const points = particles.map(particle => {
             const elevation = ground(particle.longitude, particle.latitude) + Math.max(0, finite(particle.altitudeMeters));
             const position = maplibregl.MercatorCoordinate.fromLngLat([particle.longitude, particle.latitude], elevation);
-            color.set(concentrationColor(particle.concentration, thresholds));
+            color.set(proximityColor(particle, origin));
             return {
                 x: (position.x - anchor.x) / scale, y: -(position.y - anchor.y) / scale, z: position.z / scale,
                 radius: Math.max(1, finite(particle.radiusMeters, 12)) * position.meterInMercatorCoordinateUnits() / scale,
