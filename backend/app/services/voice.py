@@ -5,7 +5,10 @@ import os
 import re
 from pathlib import Path
 
-from elevenlabs import ElevenLabs
+try:
+    from elevenlabs import ElevenLabs
+except ImportError:  # Text-only fallback must work without provider extras.
+    ElevenLabs = None  # type: ignore[assignment]
 
 
 class VoiceResult:
@@ -32,7 +35,7 @@ def synthesize_dispatch(text: str) -> VoiceResult:
         return VoiceResult("READY", cache_key, f"/audio-cache/{output_path.name}", "ELEVENLABS_CACHE")
 
     api_key = os.getenv("ELEVENLABS_API_KEY", "").strip()
-    if not api_key or not voice_id:
+    if not api_key or not voice_id or ElevenLabs is None:
         return VoiceResult("TEXT_ONLY", cache_key, None, "TEXT_FALLBACK_MISSING_CONFIG")
 
     try:
@@ -43,10 +46,17 @@ def synthesize_dispatch(text: str) -> VoiceResult:
             text=text[:500],
             model_id="eleven_multilingual_v2",
         )
-        with output_path.open("wb") as output_file:
+        temporary_path = output_path.with_suffix(".tmp")
+        byte_count = 0
+        with temporary_path.open("wb") as output_file:
             for chunk in audio:
                 if chunk:
                     output_file.write(chunk)
+                    byte_count += len(chunk)
+        if byte_count == 0:
+            temporary_path.unlink(missing_ok=True)
+            return VoiceResult("TEXT_ONLY", cache_key, None, "TEXT_FALLBACK_PROVIDER_ERROR")
+        os.replace(temporary_path, output_path)
         return VoiceResult("READY", cache_key, f"/audio-cache/{output_path.name}", "ELEVENLABS")
     except Exception:
         return VoiceResult("TEXT_ONLY", cache_key, None, "TEXT_FALLBACK_PROVIDER_ERROR")

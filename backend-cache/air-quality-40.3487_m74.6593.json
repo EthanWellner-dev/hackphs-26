@@ -1,0 +1,29 @@
+{
+  "current": {
+    "european_aqi": 42,
+    "interval": 3600,
+    "nitrogen_dioxide": 18.9,
+    "ozone": 64.0,
+    "pm10": 19.2,
+    "pm2_5": 18.9,
+    "time": "2026-10-10T22:00",
+    "us_aqi": 58
+  },
+  "current_units": {
+    "european_aqi": "EAQI",
+    "interval": "seconds",
+    "nitrogen_dioxide": "\u03bcg/m\u00b3",
+    "ozone": "\u03bcg/m\u00b3",
+    "pm10": "\u03bcg/m\u00b3",
+    "pm2_5": "\u03bcg/m\u00b3",
+    "time": "iso8601",
+    "us_aqi": "USAQI"
+  },
+  "elevation": 74.0,
+  "generationtime_ms": 0.36406517028808594,
+  "latitude": 40.300003,
+  "longitude": -74.7,
+  "timezone": "GMT",
+  "timezone_abbreviation": "GMT",
+  "utc_offset_seconds": 0
+}
