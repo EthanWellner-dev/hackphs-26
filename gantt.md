@@ -1,164 +1,126 @@
-# Aero-Hazard / Plume — Gantt Chart
+﻿# Aero-Hazard / Plume — Gantt and Acceptance Gates
 
-This is the **recovery schedule from Saturday 3:15 PM to the 8:00 AM judge-ready freeze**. The base product is already real: FastAPI contracts, deterministic dispatch, plume generation, context fallbacks, Cesium rendering, timeline controls, and tests exist. The remaining work is not “build the whole architecture”; it is to turn the existing system into one unforgettable, reliable vertical slice.
+**Audited 2026-10-11.** This is a recovery plan, not evidence that scheduled work finished. The previous **84% judge-ready** claim and completion counts were unsupported and have been removed. [todo.md](./todo.md) is the evidence-scoped checklist; [project_outline.md](./project_outline.md) is the original target, not the implemented architecture.
 
-**Assumptions:** local time is EDT; Google Maps 3D access arrives at 10:00 PM; the open Cesium scene remains the guaranteed fallback. Do not make Google, Gemini, ElevenLabs, live weather, or Overpass required for the demo.
+The current application uses **Vite JavaScript/TypeScript, MapLibre and Three.js**, with a FastAPI simulation/API backend. It does not currently establish a mounted React/Cesium application, a Google Photorealistic scene or a guaranteed offline map. No API keys is not the same as no network: the active map loads an external style, tiles and DEM.
 
-## Winning vertical slice
+**Safety boundary:** this is an uncalibrated simulation prototype, not an emergency-response authority. Real-world dispersion/toxicology validation, field/population observations, indoor/personal-dose modeling and qualified emergency-response review remain mandatory blockers.
 
-> **“Give us the incident. We will show you where the plume goes, what it threatens, and what the commander should do next.”**
+## Status and evidence rules
 
-The judge flow should prove five things in under three minutes:
+- **Implemented (scoped):** source plus focused evidence support the stated backend/helper/document behavior.
+- **Partial / in progress:** code exists or work is active, but the whole feature or final integration validation is incomplete.
+- **Planned / blocked:** acceptance has not been established; a planned time or test file alone is not proof.
+- Evidence supplied by the coordinator: historical **85-backend/15-frontend baseline**, followed by **15 mesh tests and 11 playback/cache/dispatch tests passing** during current work. These are separate scoped run results, not a cumulative total or browser acceptance. Backend contract integration remains pending. [Recorded backend smoke evidence](./docs/PERFORMANCE_RUNBOOK.md#readiness-and-weather-evidence) covers health, live bootstrap and mass scaling. This audit did not rerun full suites while implementation agents were active.
 
-1. A cinematic 3D venue scene with the release source and colored concentration field.
-2. A plain-English command such as **“Chlorine leak at the main entrance; deploy Engine 4 south and increase the wind.”**
-3. A visible state change: plume, incident status, unit/command log, and updated metrics.
-4. A concise action plan with shelter direction, HVAC/isolation advice, PPE, assumptions, and data provenance.
-5. Timeline scrubbing plus a Google Photorealistic 3D “wow” moment, with an immediate open-scene fallback if the provider fails.
+**Latest checkpoint:** the coordinator reports a production build and **28 frontend tests passing before the new WebM capture and chat/voice responder additions**. Those additions, SpeechRecognition transcript review/Enter submission and backend responder parsing remain pending integration and browser validation. This checkpoint does not certify them.
 
-## Schedule at a glance
+## Judge flow to validate
 
-**Judge-ready progress:** 70% — stateful interaction, live-wind bootstrap, real map fallback, guarded Google path, and request/cache reductions are implemented and validated.
+1. Load the Princeton Middle School simulation with a visible source, correctly labeled wind/provenance and no invented population estimates.
+2. Submit a supported plain-text incident update; show changed scenario/frame and an honest acknowledgement. Do not promise an arbitrary compound command or real deployed units from a single-command fallback.
+3. Inspect the current simulated plan, assumptions and disclaimer; manual edits/reset/history must visibly preserve correct scenario state.
+4. Scrub or play five-minute frames through T+120 and inspect modeled outdoor two-hour exposure. Exposure is concentration-time integral, **not personal absorbed dose**.
+5. Download escaped CSV for all returned modeled buildings and PNG/JPG map captures with attribution and a simulation disclaimer only after browser verification. A perimeter GeoJSON export is a separate outstanding feature; none of these artifacts is an approved evacuation boundary.
 
-| Workstream | Window | Status | Priority | Deliverable / exit gate |
+Optional Google imagery, speech/audio and provider integrations must not be represented as complete without their own acceptance results. The original Google “wow” moment is not a prerequisite for this recovery flow.
+
+## Workstream schedule and current status
+
+Original windows below are **planning targets from the Saturday-to-Sunday recovery plan**, not completion timestamps. EDT is assumed. Passed windows remain partial until evidence closes their gate; the 8:00 AM freeze is a target, not an accomplished milestone.
+
+| Workstream | Original target window | Audited status | Priority | Exit gate / remaining work |
 |---|---:|---|---:|---|
-| Scope lock and demo seed | 3:15–4:00 PM | **Complete** | P0 | One named venue incident, exact judge prompt, and no-new-features rule |
-| Dashboard command-center polish | 4:00–6:00 PM | Next | P0 | Action plan and dispatch result are visible; command history/unit state is visible |
-| Backend cache, physics, and map-cost gate | 6:00–7:00 PM | **Complete** | P0 | Provider freshness windows, persistent Google session quota guard, backend tests green, and no uncontrolled paid 3D requests |
-| Frontend rebuild against verified contracts | 7:00–9:00 PM | **Complete** | P0 | Fast command-center dashboard with cached API reads, debounced timeline, capped local plume rendering, dispatch/action plan, and guarded renderer status |
-| Explosion event visualization | 8:00–8:20 PM | Planned | P1 | Escalated incidents show a restrained source pulse/ring animation without affecting map performance |
-| Judge interaction shortcuts | 6:00–7:30 PM | **Complete** | P0 | One-click seeded prompts, reset, active-unit state, command history, full action plan, and text dispatch |
-| Reliability and offline hardening | 7:30–9:00 PM | **Complete** | P0 | Clean build, browser smoke test, no-key demo, focused frontend tests, provider failure recovery, and reduced request fan-out |
-| Demo props and rehearsal v1 | 9:00–10:00 PM | Planned | P0 | 2.5-minute script, hot-file, alarm cue, and fallback narration |
-| Google 3D integration | 10:00–11:30 PM | Blocked on key | P0 | Photorealistic scene loaded, attribution shown, open-scene fallback verified |
-| Visual polish and rehearsal v2 | 11:30 PM–1:00 AM | Planned | P1 | Strong hierarchy, readable labels, stable camera, no debug clutter |
-| Freeze candidate and backup | 1:00–2:00 AM | Planned | P0 | Tagged/copyable known-good build and startup/recovery checklist |
-| Buffer / sleep / recovery | 2:00–5:30 AM | Reserved | P0 | Protect the morning reliability window; no feature work |
-| Final smoke test | 5:30–6:30 AM | Planned | P0 | Three consecutive successful runs on presentation laptop |
-| Final rehearsal and recording | 6:30–7:30 AM | Planned | P0 | Each teammate knows their cue, judge prompt, and recovery line |
-| Submission freeze | 7:30–8:00 AM | Planned | P0 | Freeze files, verify links/assets, stop changing core behavior |
-| Stretch suite | After freeze only | **Defer** | P2 | Mobile, collaboration, custom shader, and extra providers are out of scope |
+| Scope and demo seed | Sat 3:15–4:00 PM | Partial | P0 | Backend venue defaults exist; final supported prompt/reset flow and team scope sign-off pending |
+| Dashboard polish | Sat 4:00–6:00 PM | Partial | P0 | Map/dashboard code exists; current UI layout, metrics and source behavior require browser acceptance |
+| Backend cache/physics/map guard | Sat 6:00–7:00 PM | Implemented baseline; changes in progress | P0 | Prior focused baseline passed; revalidate current release/exposure changes and their budgets |
+| Frontend contract integration | Sat 7:00–9:00 PM | In progress | P0 | Verify active MapLibre UI against changed API; do not credit obsolete React/Cesium implementation |
+| Explosion visualization | Sat 8:00–8:20 PM | Partial | P1 | Event handling exists; mass-conserving current behavior and actual source animation are distinct gates |
+| Judge interaction shortcuts | Sat 6:00–7:30 PM | In progress | P0 | Manual controls, prompts, reset, history, action-plan display and export need final coordinator evidence |
+| Reliability and provider failures | Sat 7:30–9:00 PM | Partial | P0 | Existing unit tests are not complete browser/no-network/provider-failure rehearsal |
+| Props and first rehearsal | Sat 9:00–10:00 PM | Partial | P0 | Script exists; physical props, media and executed rehearsal remain outstanding |
+| Google Photorealistic integration | Sat 10:00–11:30 PM | Not integrated; provider setup unverified | Optional | Backend admission guard exists; browser renderer, credentials, credits and fallback not verified |
+| Visual polish and second rehearsal | Sat 11:30 PM–Sun 1:00 AM | In progress / rehearsal outstanding | P1 | Cloud geometry/wind changes need browser validation; rehearsal not evidenced |
+| Freeze candidate and backup | Sun 1:00–2:00 AM | Outstanding | P0 | Rerun suites/build, resolve interaction blockers, copy/tag known-good artifact |
+| Recovery buffer | Sun 2:00–5:30 AM | Replanning required | P0 | Active work has consumed buffer; finish bounded integration before adding features |
+| Final smoke | Sun 5:30–6:30 AM | Planned | P0 | Three consecutive successful presentation-laptop flows, including recovery |
+| Final rehearsal/recording | Sun 6:30–7:30 AM | Planned | P0 | Timed flow, teammate cues, fallback narration and recording |
+| Submission freeze | Sun 7:30–8:00 AM | Planned | P0 | Verify artifact/links/assets, then stop core behavior edits |
+| Stretch features | After verified freeze only | Deferred | P2 | Mobile/PWA, collaboration, vision, extra providers and custom physics shader |
 
-## Detailed time-boxed Gantt
+## Remaining-work dependency chart
+
+This is the execution order now, not a claim of elapsed completion:
 
 ```text
-Local time             15 16 17 18 19 20 21 22 23 00 01 02 03 04 05 06 07 08
-                       |----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|
-Scope + demo seed      [██]
-Dashboard polish          [████████]
-Judge shortcuts                         [██████]
-Reliability/API smoke                              [██████]
-Props + rehearsal v1                                             [███]
-Google 3D integration                                                  [██████]
-Polish + rehearsal v2                                                         [██████]
-Freeze + backup                                                                        [████]
-Buffer / recovery                                                                            [██████████]
-Final smoke                                                                                              [████]
-Final rehearsal                                                                                                  [████]
-Submission freeze                                                                                                     [██]
+Backend release + exposure corrections ───┐
+Renderer cloud + wind + budgets ──────────┼─> integrated API/UI checks
+Coordinator controls + plan + exports ────┘          │
+                                                  v
+                                      suites + production build
+                                                  │
+                                                  v
+                                      browser + failure drills
+                                                  │
+                                                  v
+                                  presentation-laptop rehearsal x3
+                                                  │
+                                                  v
+                                     freeze artifact + recording
 ```
 
-## Milestones and acceptance gates
+Backend and renderer work can run independently; final UI validation depends on their stable contracts/results. Do not start optional integrations at the expense of the freeze gates.
 
-| Milestone | Target | Acceptance gate | Status |
-|---|---:|---|---|
-| G1 — Scope lock | 4:00 PM | One seeded chlorine incident, one escalation command, one fallback story; all other ideas parked | **In progress** |
-| G2 — Judge-visible command center | 6:00 PM | Dispatch response renders action plan, assumptions, provenance, and command/unit history in the UI | **In progress** |
-| G3 — Interactive vertical slice | 7:30 PM | Judge can type or click a prompt and see a changed scenario, plume, metrics, and visible command result | Planned |
-| G4 — Offline reliability | 9:00 PM | Frontend build and backend tests pass; demo works with Gemini/ElevenLabs/Google keys absent | Planned |
-| G5 — Google wow pass | 11:30 PM | Google Photorealistic 3D loads with attribution; disabling it returns cleanly to Cesium open 3D | Blocked until 10 PM |
-| G6 — Freeze candidate | 2:00 AM | Known-good build copied/tagged; no unresolved P0/P1 startup or interaction failures | Planned |
-| G7 — Presentation-ready | 7:30 AM | Three consecutive 2.5-minute rehearsals, including the failure/recovery script | Planned |
-| G8 — Submission freeze | 8:00 AM | No feature edits after this point; only presentation/submission checks | Planned |
+## Milestone acceptance gates
 
-## Workstream detail and remaining scope
+| Gate | Required evidence | Current status |
+|---|---|---|
+| G1 — Seeded scope | One incident and supported prompt/reset flow verified against actual command behavior | Partial: backend default tested; interactive flow pending |
+| G2 — Visible command center | Browser shows source, current metrics, plume, plan/history and honest data availability | In progress: coordinator UI work |
+| G3 — Stateful interactive slice | Dispatch/manual edits/reset survive scrub/play/weather refresh; stale responses cannot overwrite them | In progress: helper tests are insufficient alone |
+| G4 — Current automated baseline | Backend/frontend suites and production build pass after current changes; generation/geometry budgets recorded | Partial: latest build and 28 frontend tests reported passing before new video/voice/responder work; final backend integration and rerun pending |
+| G5 — Provider/offline recovery | Keyless core flow and independent AI/audio/weather/map failures exercised without misleading empty/success state | Not complete; no guaranteed local offline map |
+| G6 — Optional Google pass | Guarded actual tiles, visible credits, provider-denial recovery and request accounting | Not integrated/verified; omit from core pitch |
+| G7 — Freeze candidate | Known-good build copied/tagged, startup checklist exercised, no unresolved blocking interactions | Outstanding |
+| G8 — Presentation/submission | Three timed rehearsals, recovery line, props/assets/links verified and changes frozen | Planned |
 
-### Foundation, backend, simulation, context — **mostly complete**
+## Supported implementation evidence
 
-- `[x]` React/Vite frontend shell and FastAPI backend shell.
-- `[x]` Validated scenario, weather, release, plume, dispatch, action-plan, and context contracts.
-- `[x]` Deterministic no-key dispatch path with Gemini and ElevenLabs fallbacks.
-- `[x]` Bounded plume generation with wind transport, stability, pressurization, explosion, density, precipitation, terrain/building attenuation, and surface-zone metadata.
-- `[x]` Cached/live/DEMO context orchestration and provenance labels.
-- `[x]` Provider freshness windows for weather, air quality, alerts, elevation, OSM, and routing to prevent repeated external requests.
-- `[x]` Persistent Google Photorealistic session guard with monthly/daily/hourly limits and safe `OPEN_3D` fallback.
-- `[x]` Reduced API usage with one cached/coalesced bootstrap, no duplicate map-session request, lazy MapLibre fallback, and backend live-context request coalescing.
-- `[x]` Backend-first verification gate: focused physics, context, API, performance, and map-guard tests pass.
-- `[x]` Frontend rebuilt against verified contracts with session cache, debounced timeline requests, capped local rendering, and guarded map-session display.
-- `[~]` Local safe plume scene is complete; Cesium/Google 3D remains optional and is gated behind the stateful interaction slice and fixed-camera fallback test.
-- `[ ]` Timeline, altitude slicing, FLIR, concentration footprints, dose estimate, and GeoJSON export are deferred until they can be added without exceeding the request/render budgets.
-- `[x]` Documented judge-ready implementation sequence, performance budgets, request budgets, failure drills, and rehearsal runbook.
-- `[x]` Finished the enforceable API call budget, cache-tier policy, Google cost stops, and 150-second judge rehearsal script.book.
-### P0 — next implementation gate: fast judge-visible vertical slice
+These are deliberately narrower than product-level completion claims:
 
-The execution plan and hard performance budgets are documented in [docs/JUDGE_READY_BUILD_PLAN.md](./docs/JUDGE_READY_BUILD_PLAN.md) and [docs/PERFORMANCE_RUNBOOK.md](./docs/PERFORMANCE_RUNBOOK.md). The order is intentional: preserve scenario state, add judge-visible state, test the safe path, then attempt optional Google 3D.
+- **API and model baseline:** [main.py](./backend/app/main.py), [API contracts](./backend/tests/test_api_contracts.py), [backend behavior tests](./backend/tests/test_backend_slice.py), [transport tests](./backend/tests/test_live_transport.py), [hazard-rendering tests](./backend/tests/test_hazard_rendering.py). Includes bounded Gaussian approximation, five-minute wind integration, simulated plans and candidate surface metadata. Does not validate source calibration, terrain CFD, evacuation safety or personal dose.
+- **Context/services:** [context service](./backend/app/services/context.py), [context tests](./backend/tests/test_context.py), [weather fallback tests](./backend/tests/test_weather_orchestration.py). Live/cached/DEMO orchestration, weather/alerts/air quality/elevation/Overpass/routing and cache fallback exist; the old claim these services were absent was incorrect. Coverage/availability are not guaranteed.
+- **AI/audio/Google backend:** [Gemini tests](./backend/tests/test_agent_provider.py), [ElevenLabs tests](./backend/tests/test_voice_provider.py), [map admission tests](./backend/tests/test_map_guard.py). Mocked provider correctness is not live voice playback, genuine resource deployment, photorealistic rendering or a hard billing guarantee.
+- **Frontend helpers:** [timeline tests](./frontend/src/timeline.test.ts), [dispatch tests](./frontend/src/aiDispatch.test.ts), [playback tests](./frontend/src/playback.test.ts), [plume tests](./frontend/src/plumeLayer.test.js). New playback/cloud coverage requires current results; helper tests cannot establish WebGL visual quality or full DOM wiring.
+- **Planning artifacts:** [build plan](./docs/JUDGE_READY_BUILD_PLAN.md), [request budget](./docs/API_CALL_BUDGET.md), [runbook](./docs/PERFORMANCE_RUNBOOK.md), [rehearsal script](./docs/DEMO_REHEARSAL_SCRIPT.md) exist. Their instructions/targets are not executed acceptance records, and references to old renderer paths require care.
 
-### P0 — judge-visible vertical slice before 10 PM
+## Active integration — do not mark complete prospectively
 
-- `[ ]` Render the backend `actionPlan` in the dashboard instead of hard-coding generic actions.
-- `[ ]` Fix timeline requests so a post-dispatch scenario is preserved instead of `/api/plume` silently rebuilding the default scenario.
-- `[ ]` Add visible command history and deployed-unit state; every dispatch must leave evidence on screen.
-- `[ ]` Add one-click demo prompts for the exact escalation flow while keeping free-text input.
-- `[ ]` Add a visible simulation/provenance state and a concise approximation disclaimer.
-- `[ ]` Add a manual reset to the seeded baseline incident.
+- [~] **Backend agent:** two-hour building/area outdoor exposure, mass-conserving release corrections, API bounds/caching/performance and focused regression results.
+- [~] **Renderer agent:** merged dense cloud geometry with sparse parcel retention, negligible-concentration visual decluttering, depth/terrain behavior and bounded mesh budgets. Fifteen mesh tests are reported passing; final browser integration remains pending. The [research note](./docs/PLUME_DILUTION_AND_EXPOSURE_RESEARCH.md) recommends a provisional **renderer-only 1%-of-trace floor**, never physics deletion or a toxicological safety threshold. Hidden contributions must remain in transport, overlap summation, exposure and mass accounting; summed-field/lower-floor behavior needs verification.
+- [~] **Coordinator:** manual hazard/source/weather controls with leak/burst/combined modes, release rate/duration and burst mass/time; scenario metrics, plan/history/reset/prompts and playback/exposure wiring. Backend contract integration and browser validation remain pending.
+- [~] **Coordinator exports:** escaped CSV for all returned modeled building records, plus PNG/JPG map capture retaining attribution and simulation disclaimer. Verify complete rows, escaping/units/provenance, actual downloads and image content before completion. Perimeter GeoJSON remains a separate outstanding item.
+- [~] **New video capture:** coordinator is implementing WebM simulation recording. Verify recording/stop/download, playable output, attribution/disclaimer, unsupported-browser handling and resource cleanup; no end-to-end acceptance yet.
+- [~] **New chat/voice responders:** coordinator is implementing SpeechRecognition with transcript review and explicit Enter submission; backend agent is implementing responder parsing helpers. Verify supported commands against returned state, microphone/unsupported-browser failures and text fallback. Recognition is not response-audio playback or validated operational dispatch.
+- [ ] **New-feature browser acceptance:** exercise complete WebM recording/download and chat/voice responder workflows after stable backend contracts; the earlier build/28-test checkpoint predates these additions.
+- [~] **Joint final validation:** all suites/build, bounded payload/render performance, browser interactions and independent failures after the above work stabilizes.
 
-### P0 — reliability from 7:30–9:00 PM
+## Outstanding feature claims from the original checklist
 
-- `[ ]` Run backend tests and frontend production build; fix only regressions blocking the vertical slice.
-- `[ ]` Verify no-key operation and independent Gemini, ElevenLabs, live-context, and Google failure paths.
-- `[ ]` Verify text dispatch remains complete when audio is text-only.
-- `[ ]` Verify Google failure returns to Cesium open 3D without a blank map or broken camera.
-- `[ ]` Verify startup/recovery steps on the presentation laptop.
+- [ ] React application and optional Cesium/Google renderer, if retained as requirements; current MapLibre implementation is a deliberate architectural difference, not those features completed.
+- [ ] Guaranteed offline map with packaged terrain/buildings and tested style/tile failure recovery.
+- [ ] Browser speech permissions/transcript and cached-audio playback end to end; text dispatch must remain usable independently.
+- [ ] Altitude slicing and FLIR controls; old completion claims lack active UI evidence.
+- [ ] AEGL-1/2/3 iso-surfaces: current TRACE/PEL/IDLH references and visual merged shells are not AEGL contours.
+- [ ] Active-unit roster, unit markers/route overlays, genuine unit exposure/PPE model and manual location/indoor-context validation.
+- [ ] Source explosion animation and complete candidate surface-contamination display. An event flag or API surface-zone list is not a working visualization.
+- [ ] Uniform browser retries/backoff, complete attribution audit, mobile/field layout and verified current terrain zoom/failure behavior.
+- [ ] Actual provider failure/no-key/no-network drills, presentation-laptop asset/audio checks, three rehearsals and frozen artifact.
 
-### P0 — Google 3D pass at 10 PM
+## Real-world validation blockers
 
-- `[ ]` Set the Google key through local environment configuration only; never commit it.
-- `[ ]` Load Photorealistic 3D Tiles, preserve attribution/credits, and capture one reliable venue camera.
-- `[ ]` Keep the open Cesium scene as the guaranteed fallback; do not depend on arbitrary map exploration.
+The original outline is aspirational. Before any real emergency use, independently benchmark dispersion/uncertainty against reference and field datasets; calibrate source, weather, terrain/building and deposition behavior; validate multi-hazard units, thresholds, mixture toxicology and radiation/infection interpretation; integrate actual population/occupancy/field observations; model indoor infiltration and personal exposure/PPE where claimed; and obtain qualified emergency-response review. Until then, exposure, action plans, boundaries and decontamination candidates remain explicitly **simulation-only**, not safe-route/evacuation/PPE instructions.
 
-### P1 — polish and presentation after the vertical slice
+## Audit log
 
-- `[~]` Tighten visual hierarchy and readability around source, plume bands, wind, current time, satellite imagery, and the supplied tactical reference.
-- `[~]` Make voice-first AI dispatch the primary interaction with a blue orb and live transcript; retain text via the bottom-right bubble affordance.
-- `[~]` Constrain map height to the root viewport and add a green-to-red 2D building impact heatmap.
-- `[ ]` Add a deterministic unit marker/route only if it does not destabilize the map.
-- `[ ]` Prepare historical dossier, venue hot-file, alarm cue, and spoken walkthrough.
-- `[ ]` Freeze a known-good build and perform three complete rehearsals.
-
-### Explicitly deferred until after the 8:00 AM freeze
-
-- `[ ]` Custom WebGL advection-diffusion shader, MapLibre second renderer, mobile/PWA, collaboration sync, and new provider integrations.
-
-## Advanced extension backlog
-
-The backlog is ordered by likely judge impact. These items should be scheduled after the core offline-safe demo gates, with Priority 1 work taking precedence over Priority 2 and below.
-
-| Priority | Workstream | Planned order | Feature set | Acceptance gate |
-|---|---|---:|---|---|
-| 1 | EOC visual intelligence | Next | Altitude slicing, animated wind streamlines, AEGL iso-surfaces, cumulative dose, evacuation GeoJSON, FLIR view | A judge can inspect altitude, wind, thresholds, dose, and exportable boundaries in one seeded incident |
-| 2 | Multimodal judge interaction | After P1 | Placard photo scanner, reviewed hazard auto-population, confidence/reasoning trace, drone recon analysis, responder QR/mobile field view | A judge can provide an image or scan a QR code and see validated, clearly approximate results |
-| 3 | Immersive presentation polish | After P2 | EOC chimes, radio chatter/static, browser audio filtering, safe hardware dispatch switch, sensory radius, reaction indicators | Audio and hardware enhance the demo without becoming required for startup or recovery |
-| 4 | Collaboration stretch | Last | Role-based field views and multi-user synchronization | Core demo remains offline-safe and single-user when collaboration services are unavailable |
-
-### Advanced phase mapping
-
-- **Phase 9:** AI vision and multimodal intake.
-- **Phase 10:** Interactive EOC tools and graphics polish.
-- **Phase 11:** Field collaboration, QR onboarding, and audio polish.
-
-## Update log
-
-| Date | Change | Overall progress |
-|---|---|---:|
-| 2026-10-10 | Added 24-hour cache reuse for Overpass building geometry, preserving LIVE/CACHED provenance and stale-cache fallback behavior. | 64% |
-| 2026-10-10 | Added real/cached OSM building footprint contracts and queries, terrain-provider fallback, constrained 3D camera framing, circular voice orb refinement, and explosion source pulse groundwork; validation pending. | 62% |
-| 2026-10-10 | Added voice-first dispatch UI, live browser transcript submission, satellite imagery default, viewport-constrained map sizing, and 2D green-to-red building impact overlays; frontend build passes. | 58% |
-| 2026-10-10 | Added wind streamlines, AEGL-1/2/3 iso-surface boundaries, simulated cumulative dose metrics, and one-click evacuation GeoJSON export with deterministic tests. | 48% |
-| 2026-10-10 | Fixed Vite development serving for Cesium image/texture assets, verified correct MIME types and clean live rendering, and switched development feedback to `npm run dev`. | 51% |
-| 2026-10-10 | Added frontend API retry/cache behavior, extracted/tested building exposure calculations, and added Vitest coverage; frontend tests and production build pass. | 44% |
-| 2026-10-10 | Added deterministic building exposure heatmap: venue fixtures are colored green through yellow to red from nearby plume severity; frontend production build passes. | 41% |
-| 2026-10-10 | Added frontend API client, altitude slicing, FLIR tactical view, context provenance, cached audio playback, and resilient UI states; frontend production build passes. | 40% |
-| 2026-10-10 | Added the prioritized advanced extension backlog, mapped to Phases 9–11 and gated behind the offline-safe core demo. | 37% |
-| 2026-10-10 | Added fixture-first context normalization, provenance labels, straight-line routing fallback, cache helpers, and provider-failure tests. | 37% |
-| 2026-10-10 | Added the backend hazard catalog, threshold validation, deployment command application, and command-path tests. | 34% |
-| 2026-10-10 | Created schedule from the project outline; recorded completed backend/frontend foundation work and current blockers. | 31% |
+**2026-10-11:** replaced unsupported percentage/history and conflicting complete/planned labels with evidence-scoped gates. Corrected the active renderer and no-network limitation; downgraded unverified shortcuts, audio, Google/Cesium, advanced views/AEGL/personal-dose and broad reliability claims. Preserved real backend/provider/helper progress. Active cloud, exposure and coordinator UI/export work remains in progress pending final results. See [todo.md](./todo.md) for item-level status.

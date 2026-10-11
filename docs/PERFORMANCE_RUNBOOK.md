@@ -6,7 +6,7 @@ Use this runbook to keep the judge flow fast, deterministic, and safe from accid
 
 ## Startup order
 
-1. Start the backend with the local environment file loaded.
+1. Run the VS Code task **Backend API (local)** (uses `backend/.venv/Scripts/python.exe`), or run `python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000` with the backend environment active. Open `http://127.0.0.1:8000/docs`; health is `/api/health`.
 2. Start the frontend.
 3. Confirm the health endpoint returns `status=ok`.
 4. Confirm the frontend shows the seeded incident and `OPEN_3D`/local-safe renderer status.
@@ -47,13 +47,33 @@ The enforceable per-action policy is maintained in [API_CALL_BUDGET.md](./API_CA
 | Measurement | Target | Hard stop |
 |---|---:|---:|
 | Backend plume generation | <100 ms | 1 s |
-| Visible particles | 24 | 24 |
-| Visible volume cells | 16 | 16 |
-| Timeline debounce | 220 ms | 250 ms |
+| Visible particles | 600 typical, instanced | 1,600 renderer cap |
+| Visible volume cells | 10 | 10 |
+| Timeline debounce | 90 ms | 25 cached five-minute frames per scenario revision |
 | Google root sessions per app session | 1 | 1 |
-| Normal-demo provider requests after bootstrap | 0 | 0 |
+| Weather refresh after bootstrap | Every 300 seconds | Cached provider snapshot reused between refreshes |
 | Local scene | 55+ FPS | 45 FPS |
 | Initial safe-path JavaScript | Keep map SDKs out of initial route | No eager paid renderer |
+
+## Forecast playback and exposure view
+
+- **PLAY 2 HOURS** starts at T+0 on first play, advances in five-minute steps and stops at T+120. Pause/resume and restart are available. Buffering waits for the next frame instead of skipping predicted intervals. Scrubbing, dispatch and weather changes cancel playback; revision-scoped caching holds at most 25 frames.
+- **2H EXPOSURE** is a fixed T+0–120 incident forecast, not the instantaneous scrubber frame. It displays bounded area samples and available building footprints. Click a polygon for peak, mean and time-integrated outdoor concentration.
+- A concentration-time integral in **ppm·min** (gas) or **mg·min/m³** (aerosol) is not inhaled or absorbed dose. Occupancy, indoor infiltration, breathing rate and PPE are not modeled. Colors compare mean modeled concentration with the selected hazard's concentration references; they are not validated two-hour safe-dose classifications.
+- Exposure results invalidate when scenario or weather changes. Empty/missing building coverage is labeled; no houses or occupants are fabricated.
+- **CSV LIST** exports all returned building exposure records with units and interpretation, not only the top rows visible on screen. **PNG MAP / JPG MAP** capture the shaded viewport and include source attribution, weather provenance and a simulation disclaimer. Wait for map tiles and exposure calculation before exporting.
+- **VIDEO ↓** preloads the same full-quality 25 frames, then records forecast playback to WebM. Browser MediaRecorder/canvas capture support is required. Pause or scenario changes interrupt playback; do not interpret a shortened recording as a complete forecast.
+- Release controls expose constant-rate leak, instantaneous gas release and combined leak-plus-burst, with rate, duration, impulse mass/time and hazard presets. These model gas transport, not blast damage.
+- The small blue orb starts browser speech recognition when supported. Review the transcript and press Enter; typed messages use the identical dispatch endpoint. Microphone denial/unsupported browsers retain text input. Responder markers represent simulated positions, not live vehicle tracking.
+- Dilution/culling rationale and authoritative references: [Plume dilution and exposure research](./PLUME_DILUTION_AND_EXPOSURE_RESEARCH.md). The display cutoff is not a safety limit and never deletes physical mass or exposure contributions.
+
+## Readiness and weather evidence
+
+Backend verification on 2026-10-11: 85 tests pass, including weather fallback orchestration, mass scaling, changing-wind transport and API contracts. A live bootstrap returned Open-Meteo `LIVE`, `MODEL_CURRENT`, `stale=false`, a 15-minute native sample interval and `refreshAfterSeconds=300`. A 10 kg scenario produced about 11.82 ppm at T+30; doubling mass doubled concentration. These values are smoke-test evidence, not calibrated hazard predictions.
+
+Open-Meteo is primary; provider failure or stale-cache warnings trigger a NOAA hourly forecast fallback. NOAA is labeled forecast, not a station observation. If both fail, stale/DEMO provenance remains explicit and other context providers are still queried. Five-minute transport knots interpolate provider forecasts; they do not claim five-minute measured wind. Incident epochs survive API serialization.
+
+**Not operationally validated:** obstacle deflection is heuristic, not terrain CFD; affected area is a bounded approximate raster; population data is unavailable. Radiological/biological outputs are mass concentration, not dose/infection risk. Mixtures lack component-specific toxicology. Unit deployment is not a real resource-management system; indoor detection, safe-route validation, calibrated source terms, field-sensor assimilation, and emergency-authority review remain outstanding. Do not present this as suitable for independent evacuation, PPE or decontamination decisions.
 
 ## Failure drills
 

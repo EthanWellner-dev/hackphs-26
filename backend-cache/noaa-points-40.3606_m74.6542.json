@@ -1,0 +1,112 @@
+{
+  "@context": [
+    "https://geojson.org/geojson-ld/geojson-context.jsonld",
+    {
+      "@version": "1.1",
+      "@vocab": "https://api.weather.gov/ontology#",
+      "bearing": {
+        "@type": "s:QuantitativeValue"
+      },
+      "city": "s:addressLocality",
+      "county": {
+        "@type": "@id"
+      },
+      "distance": {
+        "@id": "s:Distance",
+        "@type": "s:QuantitativeValue"
+      },
+      "forecastGridData": {
+        "@type": "@id"
+      },
+      "forecastOffice": {
+        "@type": "@id"
+      },
+      "geo": "http://www.opengis.net/ont/geosparql#",
+      "geometry": {
+        "@id": "s:GeoCoordinates",
+        "@type": "geo:wktLiteral"
+      },
+      "publicZone": {
+        "@type": "@id"
+      },
+      "s": "https://schema.org/",
+      "state": "s:addressRegion",
+      "unit": "http://codes.wmo.int/common/unit/",
+      "unitCode": {
+        "@id": "s:unitCode",
+        "@type": "@id"
+      },
+      "value": {
+        "@id": "s:value"
+      },
+      "wx": "https://api.weather.gov/ontology#"
+    }
+  ],
+  "geometry": {
+    "coordinates": [
+      -74.6542,
+      40.3606
+    ],
+    "type": "Point"
+  },
+  "id": "https://api.weather.gov/points/40.3606,-74.6542",
+  "properties": {
+    "@id": "https://api.weather.gov/points/40.3606,-74.6542",
+    "@type": "wx:Point",
+    "astronomicalData": {
+      "astronomicalTwilightBegin": "2026-10-11T05:35:09-04:00",
+      "astronomicalTwilightEnd": "2026-10-11T19:55:25-04:00",
+      "civilTwilightBegin": "2026-10-11T06:38:14-04:00",
+      "civilTwilightEnd": "2026-10-11T18:52:20-04:00",
+      "nauticalTwilightBegin": "2026-10-11T06:06:43-04:00",
+      "nauticalTwilightEnd": "2026-10-11T19:23:51-04:00",
+      "sunrise": "2026-10-11T07:05:27-04:00",
+      "sunset": "2026-10-11T18:25:07-04:00",
+      "transit": "2026-10-11T12:45:17-04:00"
+    },
+    "county": "https://api.weather.gov/zones/county/NJC021",
+    "cwa": "PHI",
+    "fireWeatherZone": "https://api.weather.gov/zones/fire/NJZ015",
+    "forecast": "https://api.weather.gov/gridpoints/PHI/65,100/forecast",
+    "forecastGridData": "https://api.weather.gov/gridpoints/PHI/65,100",
+    "forecastHourly": "https://api.weather.gov/gridpoints/PHI/65,100/forecast/hourly",
+    "forecastOffice": "https://api.weather.gov/offices/PHI",
+    "forecastZone": "https://api.weather.gov/zones/forecast/NJZ015",
+    "gridId": "PHI",
+    "gridX": 65,
+    "gridY": 100,
+    "nwr": {
+      "areaBroadcast": "https://api.weather.gov/radio/WXM60/broadcast",
+      "pointBroadcast": "https://api.weather.gov/points/40.3606,-74.6542/radio",
+      "sameCode": "034021",
+      "transmitter": "WXM60"
+    },
+    "observationStations": "https://api.weather.gov/gridpoints/PHI/65,100/stations",
+    "radarStation": "KDIX",
+    "relativeLocation": {
+      "geometry": {
+        "coordinates": [
+          -74.6667284,
+          40.3582436
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "bearing": {
+          "unitCode": "wmoUnit:degree_(angle)",
+          "value": 0
+        },
+        "city": "Princeton",
+        "distance": {
+          "unitCode": "wmoUnit:m",
+          "value": 0
+        },
+        "state": "NJ"
+      },
+      "type": "Feature"
+    },
+    "timeZone": "America/New_York",
+    "type": "land"
+  },
+  "type": "Feature"
+}

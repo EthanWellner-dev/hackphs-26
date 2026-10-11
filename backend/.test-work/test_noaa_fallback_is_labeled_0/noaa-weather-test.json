@@ -1,0 +1,13 @@
+{
+  "properties": {
+    "periods": [
+      {
+        "startTime": "2026-10-11T08:00:00-04:00",
+        "temperature": 68,
+        "temperatureUnit": "F",
+        "windDirection": "NE",
+        "windSpeed": "4 to 6 mph"
+      }
+    ]
+  }
+}

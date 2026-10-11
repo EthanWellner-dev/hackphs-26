@@ -86,9 +86,8 @@ def acquire_map_session(requested_mode: MapMode = "PHOTOREALISTIC") -> dict[str,
     if requested_mode != "PHOTOREALISTIC":
         return _fallback("OPEN_3D requested", limits=limits)
     api_key = os.getenv("GOOGLE_MAPS_API_KEY", "").strip()
-    # Photorealistic mode is intentionally disabled: the open 3D renderer is
-    # the supported map path and must not allocate a Google tile session.
-    return _fallback("Open 3D mode configured; Photorealistic mode disabled", limits=limits)
+    if os.getenv("GOOGLE_PHOTOREALISTIC_ENABLED", "false").strip().lower() not in {"1", "true", "yes", "on"} or not api_key:
+        return _fallback("Photorealistic mode disabled or API key missing", limits=limits)
 
     now = _now()
     session_hours = max(1.0, float(os.getenv("GOOGLE_PHOTOREALISTIC_SESSION_HOURS", "3")))

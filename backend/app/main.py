@@ -1,10 +1,15 @@
 from __future__ import annotations
 
 import os
+import random
 from pathlib import Path
-from datetime import datetime, timezone
-from math import cos, exp, log, pi, radians, sin, sqrt
+from dataclasses import dataclass, field
+from functools import lru_cache
+from datetime import datetime, timedelta, timezone
+from math import ceil, cos, exp, log, pi, radians, sin, sqrt
 from typing import Literal
+
+import numpy as np
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,6 +21,7 @@ from app.services.agent import process_dispatch
 from app.services.context import BuildingFootprint, ContextSnapshot, ContextFeature, WeatherSample, demo_context, get_live_context
 from app.services.map_guard import acquire_map_session
 from app.services.voice import synthesize_dispatch
+from app.services.units import Unit, apply_property_assignment, apply_unit_deployment
 
 
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
@@ -43,15 +49,29 @@ class GasComponent(BaseModel):
 
 
 class Location(BaseModel):
-    latitude: float = 40.3573
-    longitude: float = -74.6672
-    label: str = "Princeton High School · 151 Moore St, Princeton NJ"
+    # Princeton Middle School campus centroid, 217 Walnut Lane, Princeton, NJ.
+    # Coordinates sourced from OpenStreetMap (relation 8787986, queried 2026-10-11).
+    latitude: float = Field(40.360556, ge=-90.0, le=90.0)
+    longitude: float = Field(-74.6542123, ge=-180.0, le=180.0)
+    label: str = "Princeton Middle School · 217 Walnut Lane, Princeton NJ"
+
+
+class PlumeTrajectoryPoint(BaseModel):
+    """A five-minute, world-coordinate sample for 3D plume renderers."""
+
+    timeMinutes: int = Field(ge=0, le=120)
+    longitude: float
+    latitude: float
+    altitudeMeters: float = Field(ge=0.0)
+    concentration: float = Field(ge=0.0)
+    band: Band
+    radiusMeters: float = Field(gt=0.0)
 
 
 class Hazard(BaseModel):
     name: str = "Chlorine gas"
     category: str = "CHEMICAL"
-    molecularWeightGPerMol: float | None = Field(default=None, gt=0.0, le=1_000.0)
+    molecularWeightGPerMol: float | None = Field(default=70.90, gt=0.0, le=1_000.0)
     densityRelativeToAir: float = Field(2.47, gt=0.0, le=20.0)
     decayHalfLifeMinutes: float | None = Field(default=None, gt=0.0, le=10_000_000.0)
     settlingVelocityMetersPerSecond: float = Field(0.0, ge=0.0, le=10.0)
@@ -72,7 +92,9 @@ class Hazard(BaseModel):
 
 
 class Release(BaseModel):
-    rateKgPerSecond: float = Field(15.0, ge=0.0, le=1000.0)
+    # Demo default is a ten-kilogram continuous release over 30 minutes.
+    # Keeping rate * duration explicit preserves the continuous-release API.
+    rateKgPerSecond: float = Field(10.0 / (30.0 * 60.0), ge=0.0, le=1000.0)
     durationMinutes: int = Field(30, ge=1, le=240)
     sourceHeightMeters: float = Field(1.5, ge=0.0, le=100.0)
     mode: ReleaseMode = "CONTINUOUS"
@@ -112,13 +134,17 @@ class TerrainFeature(BaseModel):
 class Scenario(BaseModel):
     scenarioId: str = "INC-8892"
     version: int = 1
+    incidentStartedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     location: Location = Location()
+    # Optional source pin; location remains the incident/map center for old clients.
+    sourceLocation: Location | None = None
     hazard: Hazard = Hazard()
     gases: list[GasComponent] = Field(default_factory=list, max_length=8)
     release: Release = Release()
     weather: Weather = Weather()
     weatherTimeline: list[WeatherSample] = Field(default_factory=list, max_length=25)
     terrainFeatures: list[TerrainFeature] = Field(default_factory=list, max_length=100)
+    activeUnits: list[Unit] = Field(default_factory=list, max_length=50)
 
     @model_validator(mode="after")
     def validate_gases(self) -> "Scenario":
@@ -130,6 +156,68 @@ class Scenario(BaseModel):
 class ScenarioPatch(BaseModel):
     scenario: Scenario
     context: ContextSnapshot | None = None
+
+
+class ExposureMetrics(BaseModel):
+    longitude: float
+    latitude: float
+    polygon: list[list[float]]
+    peakConcentration: float = Field(ge=0.0)
+    meanConcentration: float = Field(ge=0.0)
+    timeIntegratedConcentration: float = Field(ge=0.0)
+    cumulativeTimeIntegratedConcentration: list[float]
+    band: Band
+    color: str
+
+
+class BuildingExposure(ExposureMetrics):
+    footprintId: str
+    displayName: str
+
+
+class GridExposure(ExposureMetrics):
+    cellId: str
+    displayName: str
+
+
+class ExposureDomain(BaseModel):
+    bounds: dict[str, float]
+    localBoundsMeters: dict[str, float]
+    resolutionMeters: float
+    minResolutionMeters: float = 50.0
+    maxResolutionMeters: float = 2000.0
+    maxDistanceFromSourcePerAxisMeters: float = 20_000.0
+    maxCells: int = 400
+    maxBuildings: int = 250
+    truncated: bool
+    truncationReasons: list[str]
+    buildingsOutsideGrid: int
+
+
+class ExposureResponse(BaseModel):
+    scenarioId: str
+    scenarioVersion: int
+    location: Location
+    sourceLocation: Location
+    startMinutes: int = 0
+    endMinutes: int = 120
+    startAt: str
+    endAt: str
+    timeStepMinutes: int = 5
+    sampleCount: int = 25
+    breathingHeightMeters: float = 2.0
+    concentrationUnit: str
+    exposureUnit: str
+    thresholds: dict[str, float]
+    colorBasis: Literal["MEAN_CONCENTRATION"] = "MEAN_CONCENTRATION"
+    buildings: list[BuildingExposure]
+    areas: list[GridExposure]
+    gridResolutionMeters: float
+    domainTruncated: bool
+    domain: ExposureDomain
+    dataAvailability: dict[str, str]
+    assumptions: list[str]
+    disclaimer: str
 
 
 class ManualScenarioUpdate(BaseModel):
@@ -146,6 +234,11 @@ class PlumeParticle(BaseModel):
     concentration: float
     band: Band
     opacity: float
+    massKg: float = Field(default=0.0, ge=0.0)
+    density: float = Field(default=0.0, ge=0.0)
+    parentId: int = Field(default=-1, ge=-1)
+    clusterId: int = Field(default=-1, ge=-1)
+    mergeRadiusMeters: float = Field(default=0.0, ge=0.0)
 
 
 class PlumeVolume(BaseModel):
@@ -180,22 +273,45 @@ class BuildingContamination(BaseModel):
     concentration: float = Field(ge=0.0)
     band: Band
     opacity: float = Field(ge=0.0, le=1.0)
+    affected: bool = False
+    affectedColor: str = "#64748b"
+
+
+class PropertyAffectedColor(BaseModel):
+    """Stable property coloring data for map layers."""
+
+    footprintId: str
+    color: str
+    band: Band
+    concentration: float = Field(ge=0.0)
+    affected: bool
 
 
 class PlumeFrame(BaseModel):
     scenarioId: str
     scenarioVersion: int
     timeMinutes: int
+    sourceLocation: Location
     particles: list[PlumeParticle]
     volumeCells: list[PlumeVolume]
+    trajectory: list[PlumeTrajectoryPoint] = Field(default_factory=list, max_length=25)
     buildingContamination: list[BuildingContamination] = Field(default_factory=list, max_length=250)
+    propertyAffectedColors: list[PropertyAffectedColor] = Field(default_factory=list, max_length=250)
     surfaceZones: list[SurfaceZone] = Field(default_factory=list, max_length=100)
     maxConcentration: float
+    affectedAreaSqKm: float = Field(default=0.0, ge=0.0)
+    populationAtRisk: int | None = Field(default=None, ge=0)
+    concentrationUnit: str = "ppm"
+    metricsBasis: str = "Approximate puff field; area is thresholded 50 m grid coverage; population unavailable."
+    thresholds: dict[str, float] = Field(default_factory=dict)
+    windVectors: list[dict[str, float | bool]] = Field(default_factory=list, max_length=49)
+    releasedMassKg: float = Field(default=0.0, ge=0.0)
     isApproximation: bool = True
     assumptions: list[str]
 
 
 class DispatchRequest(BaseModel):
+    timeMinutes: int = Field(default=30, ge=0, le=120)
     text: str = Field(min_length=1, max_length=1000)
     scenario: Scenario
     context: ContextSnapshot | None = None
@@ -344,7 +460,8 @@ def concentration_at(
     north_meters: float = 0.0,
 ) -> float:
     """Estimate concentration with Gaussian transport, reflection, and bounded wakes."""
-    wind_speed = max(0.5, scenario.weather.windSpeedMetersPerSecond)
+    wind_sample = _weather_sample_at(scenario, time_minutes)
+    wind_speed = max(0.5, wind_sample.windSpeedMetersPerSecond)
     elapsed_seconds = max(1.0, time_minutes * 60.0)
     release_seconds = scenario.release.durationMinutes * 60.0
     if downwind_meters <= 0:
@@ -388,11 +505,17 @@ def concentration_at(
     if scenario.hazard.decayHalfLifeMinutes is not None:
         decay_factor *= 0.5 ** (max(0.0, time_minutes) / scenario.hazard.decayHalfLifeMinutes)
     settling_factor = exp(-scenario.hazard.settlingVelocityMetersPerSecond * max(0.0, time_minutes * 60.0) / max(20.0, sigma_z * 8.0))
-    return max(0.0, normalization * lateral_term * (vertical_term + ground_reflection) * dense_gas_factor * light_gas_factor * obstruction_multiplier * wet_scavenging_factor * decay_factor * settling_factor * 100.0)
+    mass_concentration_kg_per_m3 = max(0.0, normalization * lateral_term * (vertical_term + ground_reflection) * dense_gas_factor * light_gas_factor * obstruction_multiplier * wet_scavenging_factor * decay_factor * settling_factor)
+    # Convert the transport solver's kg/m³ result to ppm by the ideal-gas law.
+    # Thresholds in the hazard library are ppm, so this keeps a 10 kg release
+    # numerically consistent instead of multiplying by an arbitrary display scale.
+    molecular_weight_kg_per_mol = max(0.001, (scenario.hazard.molecularWeightGPerMol or 29.0) / 1000.0)
+    molar_volume_m3_per_mol = 8.314462618 * (wind_sample.temperatureCelsius + 273.15) / 101_325.0
+    return max(0.0, mass_concentration_kg_per_m3 / molecular_weight_kg_per_mol * molar_volume_m3_per_mol * 1_000_000.0)
 
 
 def band_for(scenario: Scenario, concentration: float) -> Band:
-    if concentration <= 0.0:
+    if concentration <= 0.0 or concentration < scenario.hazard.traceThreshold:
         return "UNKNOWN"
     if concentration >= scenario.hazard.idlhThreshold:
         return "IDLH"
@@ -406,8 +529,8 @@ def _surface_zones(scenario: Scenario, particles: list[PlumeParticle], time_minu
         return []
     remaining = max(0, scenario.hazard.surfacePersistenceMinutes - max(0, time_minutes))
     zones: list[SurfaceZone] = []
-    for index, particle in enumerate(particles):
-        if particle.concentration <= scenario.hazard.traceThreshold:
+    for index, particle in enumerate(particles[:24]):
+        if particle.concentration <= 0.0:
             continue
         affected_surface: Literal["GROUND", "BUILDING_FACADE", "ROOF", "VEGETATION"] = "GROUND"
         if scenario.terrainFeatures:
@@ -496,6 +619,40 @@ def build_action_plan(scenario: Scenario, frame: PlumeFrame, context: ContextSna
     )
 
 
+def _source_location(scenario: Scenario) -> Location:
+    return scenario.sourceLocation or scenario.location
+
+
+def _band_color(band: Band) -> str:
+    return {
+        "UNKNOWN": "#64748b",
+        "TRACE": "#facc15",
+        "PEL": "#f97316",
+        "IDLH": "#dc2626",
+    }[band]
+
+
+def _advected_position(scenario: Scenario, time_minutes: float, distance_limit: float | None = None) -> tuple[float, float]:
+    """Integrate wind vectors over five-minute intervals, not a final-wind tangent."""
+    target_time = max(0.0, time_minutes)
+    east_meters = 0.0
+    north_meters = 0.0
+    travelled = 0.0
+    for start in range(0, int(target_time), 5):
+        segment_minutes = min(5.0, target_time - start)
+        sample = _weather_sample_at(scenario, start + segment_minutes / 2.0)
+        distance = max(0.0, sample.windSpeedMetersPerSecond) * segment_minutes * 60.0
+        if distance_limit is not None:
+            distance = min(distance, max(0.0, distance_limit - travelled))
+        direction = radians((sample.windDirectionFromDegrees + 180.0) % 360.0)
+        east_meters += sin(direction) * distance
+        north_meters += cos(direction) * distance
+        travelled += distance
+        if distance_limit is not None and travelled >= distance_limit:
+            break
+    return east_meters, north_meters
+
+
 def _weather_sample_at(scenario: Scenario, time_minutes: float) -> WeatherSample:
     samples = sorted(scenario.weatherTimeline, key=lambda sample: sample.minutesFromNow)
     if not samples:
@@ -523,128 +680,321 @@ def _weather_sample_at(scenario: Scenario, time_minutes: float) -> WeatherSample
     )
 
 
-def _building_contamination(scenario: Scenario, context: ContextSnapshot | None, time_minutes: int) -> list[BuildingContamination]:
+def _local_wind(scenario: Scenario, minute: float, east: float, north: float, altitude: float, baseline: tuple[float, float] | None = None) -> tuple[float, float]:
+    """Bounded obstacle deflection, not resolved CFD or measured local wind."""
+    if baseline is None:
+        sample = _weather_sample_at(scenario, minute)
+        angle = radians((sample.windDirectionFromDegrees + 180) % 360)
+        baseline = sin(angle) * sample.windSpeedMetersPerSecond, cos(angle) * sample.windSpeedMetersPerSecond
+    vx, vy = baseline
+    for feature in scenario.terrainFeatures:
+        if altitude > feature.heightMeters:
+            continue
+        dx, dy = east - feature.eastMeters, north - feature.northMeters
+        influence = feature.radiusMeters * 2.0
+        if abs(dx) >= influence or abs(dy) >= influence:
+            continue
+        distance = sqrt(dx * dx + dy * dy)
+        if distance >= influence or distance < 0.1:
+            continue
+        strength = (1 - distance / influence) * (1 - feature.porosity) * 0.65
+        nx, ny = dx / distance, dy / distance
+        inward = min(0.0, vx * nx + vy * ny)
+        vx -= inward * nx * strength
+        vy -= inward * ny * strength
+        vx *= 1 - strength * 0.15
+        vy *= 1 - strength * 0.15
+    return vx, vy
+
+
+def _transport_scenario(scenario: Scenario, context: ContextSnapshot | None) -> Scenario:
     if context is None or not context.buildings:
-        return []
-    results: list[BuildingContamination] = []
-    for building in context.buildings[:250]:
-        east = (building.longitude - scenario.location.longitude) * 111_320.0 * cos(radians(scenario.location.latitude))
-        north = (building.latitude - scenario.location.latitude) * 111_320.0
-        wind = _weather_sample_at(scenario, time_minutes)
-        downwind = east * sin(radians((wind.windDirectionFromDegrees + 180.0) % 360.0)) + north * cos(radians((wind.windDirectionFromDegrees + 180.0) % 360.0))
-        crosswind = -east * cos(radians((wind.windDirectionFromDegrees + 180.0) % 360.0)) + north * sin(radians((wind.windDirectionFromDegrees + 180.0) % 360.0))
-        concentration = concentration_at(scenario, time_minutes, downwind, crosswind, 2.0, east, north)
-        results.append(BuildingContamination(
-            footprintId=building.footprintId,
-            displayName=building.displayName,
-            polygon=building.polygon,
-            levels=building.levels,
-            buildingType=building.buildingType,
-            concentration=concentration,
-            band=band_for(scenario, concentration),
-            opacity=min(0.85, 0.20 + concentration / max(1.0, scenario.hazard.idlhThreshold) * 0.65),
-        ))
-    return results
+        return scenario
+    result = scenario.model_copy(deep=True)
+    source = _source_location(scenario)
+    for building in context.buildings[:max(0, 100 - len(result.terrainFeatures))]:
+        east = (building.longitude - source.longitude) * 111_320 * cos(radians(source.latitude))
+        north = (building.latitude - source.latitude) * 111_320
+        if abs(east) > 2000 or abs(north) > 2000:
+            continue
+        radius = max((sqrt(((point[0] - building.longitude) * 111_320 * cos(radians(source.latitude))) ** 2 + ((point[1] - building.latitude) * 111_320) ** 2) for point in building.polygon), default=12.0)
+        result.terrainFeatures.append(TerrainFeature(featureId=building.footprintId, kind="BUILDING", eastMeters=east, northMeters=north, radiusMeters=min(500, max(5, radius)), heightMeters=(building.levels or 2) * 3.0))
+    return result
+
+
+@dataclass
+class _PuffTransportHistory:
+    # Request-local reuse for increasing sample times; never shared across scenarios.
+    positions: dict[float, tuple[float, float, float, float]] = field(default_factory=dict)
+
+
+def _puff_state(scenario: Scenario, time_minutes: int, history: _PuffTransportHistory | None = None) -> list[dict[str, float]]:
+    """One-minute mass parcels retain their world positions as later winds change."""
+    release = scenario.release
+    emissions: list[tuple[float, float]] = []
+    if release.mode != "IMPULSIVE":
+        for minute in range(min(time_minutes, release.durationMinutes)):
+            emissions.append((minute + 0.5, release.rateKgPerSecond * 60))
+    if release.mode != "CONTINUOUS" and time_minutes >= release.impulseTimeMinutes:
+        emissions.append((float(release.impulseTimeMinutes), release.impulseMassKg))
+    puffs: list[dict[str, float]] = []
+    height = plume_rise_meters(scenario)
+    pre_explosion_height = height
+    if release.hasExploded:
+        before_explosion = scenario.model_copy(update={"release": release.model_copy(update={"hasExploded": False})})
+        pre_explosion_height = plume_rise_meters(before_explosion)
+    winds = {}
+    for tick in range(time_minutes * 2):
+        minute = tick * 0.5 + 0.25
+        sample = _weather_sample_at(scenario, minute)
+        angle = radians((sample.windDirectionFromDegrees + 180) % 360)
+        winds[tick] = sin(angle) * sample.windSpeedMetersPerSecond, cos(angle) * sample.windSpeedMetersPerSecond
+    for emitted, mass in emissions:
+        if mass <= 0:
+            continue
+        puff_height = pre_explosion_height if emitted < release.impulseTimeMinutes else height
+        east = north = travelled = 0.0
+        minute = emitted
+        if history is not None and emitted in history.positions:
+            previous = history.positions[emitted]
+            if previous[3] <= time_minutes:
+                east, north, travelled, minute = previous
+        while minute < time_minutes:
+            step = min(0.5, time_minutes - minute)
+            vx, vy = _local_wind(scenario, minute + step / 2, east, north, puff_height, winds[int(minute * 2)])
+            east += vx * step * 60
+            north += vy * step * 60
+            travelled += sqrt(vx * vx + vy * vy) * step * 60
+            minute += step
+        if history is not None:
+            history.positions[emitted] = east, north, travelled, minute
+        age = time_minutes - emitted
+        sigma_y, sigma_z = dispersion_coefficients(scenario, max(1, travelled))
+        # Finite source size and calm-air diffusion avoid singular instant-release peaks.
+        sy = sqrt(sigma_y ** 2 + 64 + age * 20)
+        sz = sqrt(sigma_z ** 2 + 16 + age * 4)
+        sx = max(sy, 15.0)
+        retained = mass
+        if scenario.hazard.decayHalfLifeMinutes:
+            retained *= 0.5 ** (age / scenario.hazard.decayHalfLifeMinutes)
+        retained *= exp(-(scenario.hazard.settlingVelocityMetersPerSecond + scenario.hazard.depositionVelocityMetersPerSecond) * age * 60 / max(20, sz * 8))
+        rain_factor = 0.45 if scenario.weather.precipitationType == "SNOW" else 0.75 if scenario.weather.precipitationType == "MIXED" else 1.0
+        retained *= exp(-min(0.05, 0.002 * sqrt(scenario.weather.precipitationMillimetersPerHour)) * age * rain_factor)
+        puffs.append({"east": east, "north": north, "height": puff_height, "mass": retained, "sx": sx, "sy": sy, "sz": sz, "emitted": emitted})
+    return puffs
+
+
+def _field_concentration(scenario: Scenario, puffs: list[dict[str, float]], east: float, north: float, altitude: float) -> float:
+    total = 0.0
+    for puff in puffs:
+        horizontal = ((east - puff["east"]) / puff["sx"]) ** 2 + ((north - puff["north"]) / puff["sy"]) ** 2
+        if horizontal > 36:
+            continue
+        vertical = exp(-0.5 * ((altitude - puff["height"]) / puff["sz"]) ** 2) + exp(-0.5 * ((altitude + puff["height"]) / puff["sz"]) ** 2)
+        total += puff["mass"] * exp(-0.5 * horizontal) * vertical / ((2 * pi) ** 1.5 * puff["sx"] * puff["sy"] * puff["sz"])
+    if scenario.hazard.category != "CHEMICAL" or scenario.hazard.molecularWeightGPerMol is None:
+        return total * 1_000_000  # kg/m? to mg/m?, not gas ppm or a dose estimate.
+    molar_volume = 8.314462618 * (scenario.weather.temperatureCelsius + 273.15) / 101_325
+    return total * molar_volume * 1_000_000 / (scenario.hazard.molecularWeightGPerMol / 1000)
 
 
 def make_frame(scenario: Scenario, time_minutes: int, context: ContextSnapshot | None = None) -> PlumeFrame:
-    timeline = [_weather_sample_at(scenario, minute) for minute in range(0, max(0, time_minutes) + 1, 5)]
-    if not timeline or timeline[-1].minutesFromNow != time_minutes:
-        timeline.append(_weather_sample_at(scenario, time_minutes))
+    time_minutes = max(0, min(120, time_minutes))
+    scenario = _transport_scenario(scenario, context)
+    source = _source_location(scenario)
+    longitude_scale = 111_320 * max(0.0001, cos(radians(source.latitude)))
+    puffs = _puff_state(scenario, time_minutes)
     particles: list[PlumeParticle] = []
     volumes: list[PlumeVolume] = []
-    max_concentration = 0.0
+    trajectory: list[PlumeTrajectoryPoint] = []
+    count = max(5, min(20, 900 // max(1, len(puffs))))
+    for index, puff in enumerate(puffs):
+        for child in range(count):
+            angle = child * 2.399963
+            radius = sqrt(child / count) * 1.8
+            east = puff["east"] + cos(angle) * radius * puff["sx"]
+            north = puff["north"] + sin(angle) * radius * puff["sy"]
+            altitude = max(0.5, puff["height"] + sin(child * 1.7) * puff["sz"])
+            value = _field_concentration(scenario, puffs, east, north, altitude)
+            density = min(1.0, value / max(0.01, scenario.hazard.idlhThreshold))
+            particles.append(PlumeParticle(longitude=source.longitude + east / longitude_scale, latitude=source.latitude + north / 111_320, altitudeMeters=altitude, radiusMeters=max(8, min(180, puff["sy"] * 0.4)), concentration=value, band=band_for(scenario, value), opacity=min(0.85, 0.08 + density * 0.7), massKg=puff["mass"] / count, density=density, parentId=index, clusterId=index, mergeRadiusMeters=puff["sy"]))
+    if not particles and time_minutes == 0:
+        particles = [PlumeParticle(longitude=source.longitude, latitude=source.latitude, altitudeMeters=plume_rise_meters(scenario), radiusMeters=8, concentration=0, band="UNKNOWN", opacity=0) for _ in range(5)]
+    for index in range(min(10, len(puffs))):
+        puff = puffs[round(index * (len(puffs) - 1) / max(1, min(10, len(puffs)) - 1))]
+        value = _field_concentration(scenario, puffs, puff["east"], puff["north"], puff["height"])
+        volumes.append(PlumeVolume(longitude=source.longitude + puff["east"] / longitude_scale, latitude=source.latitude + puff["north"] / 111_320, groundElevationMeters=context.elevation.elevationMeters if context and context.elevation else 0, heightMeters=puff["height"] + puff["sz"], radiusMeters=puff["sy"], concentration=value, band=band_for(scenario, value), opacity=min(0.4, value / max(0.01, scenario.hazard.idlhThreshold) * 0.4)))
+    trajectory_times = list(range(0, time_minutes + 1, 5))
+    if trajectory_times[-1] != time_minutes:
+        trajectory_times.append(time_minutes)
+    for minute in trajectory_times[:25]:
+        east, north = _advected_position(scenario, minute)
+        value = _field_concentration(scenario, puffs, east, north, plume_rise_meters(scenario))
+        trajectory.append(PlumeTrajectoryPoint(timeMinutes=minute, longitude=source.longitude + east / longitude_scale, latitude=source.latitude + north / 111_320, altitudeMeters=plume_rise_meters(scenario), concentration=value, band=band_for(scenario, value), radiusMeters=24))
+    buildings: list[BuildingContamination] = []
+    for building in (context.buildings[:250] if context else []):
+        east = (building.longitude - source.longitude) * longitude_scale
+        north = (building.latitude - source.latitude) * 111_320
+        value = _field_concentration(scenario, puffs, east, north, 2.0)
+        band = band_for(scenario, value)
+        buildings.append(BuildingContamination(footprintId=building.footprintId, displayName=building.displayName, polygon=building.polygon, levels=building.levels, buildingType=building.buildingType, concentration=value, band=band, opacity=min(0.85, value / max(0.01, scenario.hazard.idlhThreshold)), affected=value >= scenario.hazard.traceThreshold and value > 0, affectedColor=_band_color(band)))
+    # Bounded raster coverage avoids counting overlapping render-particle discs repeatedly.
+    covered: set[tuple[int, int]] = set()
+    for puff in puffs:
+        value = _field_concentration(scenario, [puff], puff["east"], puff["north"], 2.0)
+        threshold = max(1e-9, scenario.hazard.traceThreshold)
+        if value < threshold:
+            continue
+        radius = min(500.0, max(25.0, puff["sy"] * sqrt(2 * log(value / threshold))))
+        for x in range(int((puff["east"] - radius) // 50), int((puff["east"] + radius) // 50) + 1):
+            for y in range(int((puff["north"] - radius) // 50), int((puff["north"] + radius) // 50) + 1):
+                if ((x + 0.5) * 50 - puff["east"]) ** 2 + ((y + 0.5) * 50 - puff["north"]) ** 2 <= radius ** 2:
+                    covered.add((x, y))
+    vectors = []
+    for east in range(-600, 601, 200):
+        for north in range(-600, 601, 200):
+            vx, vy = _local_wind(scenario, time_minutes, east, north, 10)
+            vectors.append({"longitude": source.longitude + east / longitude_scale, "latitude": source.latitude + north / 111_320, "altitudeMeters": 10.0, "eastMetersPerSecond": vx, "northMetersPerSecond": vy, "approximate": True})
+    release = scenario.release
+    released_mass = (release.rateKgPerSecond * min(time_minutes, release.durationMinutes) * 60 if release.mode != "IMPULSIVE" else 0) + (release.impulseMassKg if release.mode != "CONTINUOUS" and time_minutes >= release.impulseTimeMinutes else 0)
+    return PlumeFrame(scenarioId=scenario.scenarioId, scenarioVersion=scenario.version, timeMinutes=time_minutes, sourceLocation=source, particles=particles, volumeCells=volumes, trajectory=trajectory, buildingContamination=buildings, propertyAffectedColors=[PropertyAffectedColor(footprintId=b.footprintId, color=b.affectedColor, band=b.band, concentration=b.concentration, affected=b.affected) for b in buildings], surfaceZones=_surface_zones(scenario, particles, time_minutes), maxConcentration=max([0.0] + [p.concentration for p in particles] + [v.concentration for v in volumes] + [b.concentration for b in buildings]), affectedAreaSqKm=len(covered) * 0.0025, populationAtRisk=None, concentrationUnit="ppm" if scenario.hazard.category == "CHEMICAL" and scenario.hazard.molecularWeightGPerMol else "mg/m³", thresholds={"trace": scenario.hazard.traceThreshold, "pel": scenario.hazard.pelThreshold, "idlh": scenario.hazard.idlhThreshold}, windVectors=vectors, releasedMassKg=released_mass, assumptions=["Illustrative Gaussian puff transport, not validated emergency guidance or CFD.", "Hourly forecasts are interpolated at five-minute simulation steps; not five-minute observations.", "Building footprints and explicit terrain obstacles heuristically deflect flow; elevation alone does not resolve terrain wind.", "Area is a bounded 50 m raster union of individual puff trace footprints (500 m radius cap), not surveyed exposure; population is unavailable.", "Particle altitude is above ground; aerosol mass concentration is not a radiological dose or biological risk."])
 
-    for index in range(18):
-        distance = 18.0 + index * 24.0
-        lateral = sin(index * 1.7) * (18.0 + index * 2.5)
-        east_meters = 0.0
-        north_meters = 0.0
-        remaining_distance = distance
-        elapsed_minutes = 0.0
-        for segment_start, segment_end in zip(timeline, timeline[1:]):
-            segment_minutes = max(0.0, min(time_minutes, segment_end.minutesFromNow) - segment_start.minutesFromNow)
-            if segment_minutes <= 0:
-                continue
-            segment_weather = _weather_sample_at(scenario, segment_start.minutesFromNow + segment_minutes / 2)
-            segment_direction = radians((segment_weather.windDirectionFromDegrees + 180) % 360)
-            segment_seconds = segment_minutes * 60.0
-            segment_distance = min(remaining_distance, max(0.0, segment_weather.windSpeedMetersPerSecond) * segment_seconds)
-            east_meters += sin(segment_direction) * segment_distance
-            north_meters += cos(segment_direction) * segment_distance
-            remaining_distance -= segment_distance
-            elapsed_minutes += segment_minutes
-            if remaining_distance <= 0:
-                break
-        if remaining_distance > 0:
-            segment_weather = _weather_sample_at(scenario, max(0.0, time_minutes - elapsed_minutes))
-            segment_direction = radians((segment_weather.windDirectionFromDegrees + 180) % 360)
-            east_meters += sin(segment_direction) * remaining_distance
-            north_meters += cos(segment_direction) * remaining_distance
-        segment_weather = _weather_sample_at(scenario, time_minutes)
-        wind_east = sin(radians((segment_weather.windDirectionFromDegrees + 180) % 360))
-        wind_north = cos(radians((segment_weather.windDirectionFromDegrees + 180) % 360))
-        crosswind_east = -wind_north
-        crosswind_north = wind_east
-        east_meters += crosswind_east * lateral
-        north_meters += crosswind_north * lateral
-        latitude = scenario.location.latitude + north_meters / 111_320.0
-        longitude = scenario.location.longitude + east_meters / (111_320.0 * cos(radians(scenario.location.latitude)))
-        segment_weather = _weather_sample_at(scenario, time_minutes)
-        altitude = max(0.5, plume_rise_meters(scenario) + (index % 5 - 2) * (3.0 + distance * 0.012) - max(0.0, scenario.hazard.densityRelativeToAir - 1.0) * min(5.0, distance * 0.018))
-        concentration = concentration_at(scenario, time_minutes, distance, lateral, altitude, east_meters, north_meters)
-        max_concentration = max(max_concentration, concentration)
-        band = band_for(scenario, concentration)
-        particles.append(
-            PlumeParticle(
-                longitude=longitude,
-                latitude=latitude,
-                altitudeMeters=altitude,
-                radiusMeters=14.0 + concentration * 1.6,
-                concentration=concentration,
-                band=band,
-                opacity=min(0.8, 0.16 + concentration / 20.0),
-            )
-        )
 
-    for index in range(10):
-        distance = 35.0 + index * 42.0
-        lateral = 0.0
-        segment_weather = _weather_sample_at(scenario, time_minutes)
-        wind_east = sin(radians((segment_weather.windDirectionFromDegrees + 180) % 360))
-        wind_north = cos(radians((segment_weather.windDirectionFromDegrees + 180) % 360))
-        east_meters = wind_east * distance
-        north_meters = wind_north * distance
-        latitude = scenario.location.latitude + north_meters / 111_320.0
-        longitude = scenario.location.longitude + east_meters / (111_320.0 * cos(radians(scenario.location.latitude)))
-        height = max(4.0, plume_rise_meters(scenario) + 5.0 + index * (1.1 + segment_weather.windSpeedMetersPerSecond * 0.08) - max(0.0, scenario.hazard.densityRelativeToAir - 1.0) * index * 0.12)
-        concentration = concentration_at(scenario, time_minutes, distance, lateral, height, east_meters, north_meters)
-        max_concentration = max(max_concentration, concentration)
-        band = band_for(scenario, concentration)
-        volumes.append(
-            PlumeVolume(
-                longitude=longitude,
-                latitude=latitude,
-                groundElevationMeters=0.0,
-                heightMeters=height + concentration * 1.2,
-                radiusMeters=28.0 + index * 2.0,
-                concentration=concentration,
-                band=band,
-                opacity=min(0.4, 0.08 + concentration / 50.0),
-            )
-        )
+def make_exposure(scenario: Scenario, context: ContextSnapshot | None = None) -> ExposureResponse:
+    """Bounded outdoor centroid samples over incident T+0–120, never personal dose."""
+    scenario = _transport_scenario(scenario, context)
+    source = _source_location(scenario)
+    longitude_scale = 111_320 * max(0.0001, cos(radians(source.latitude)))
+    history = _PuffTransportHistory()
+    times = list(range(0, 121, 5))
+    batches = [_puff_state(scenario, minute, history) for minute in times]
+    # Vertical reflection and unit conversion are identical at every 2 m receptor.
+    fields = [[(puff["east"], puff["north"], 1 / puff["sx"], 1 / puff["sy"],
+                _field_concentration(scenario, [puff], puff["east"], puff["north"], 2.0))
+               for puff in batch] for batch in batches]
+    # Cover the source and the actual advected parcels, rather than a final-wind ray.
+    west = south = -250.0
+    east = north = 250.0
+    for batch in batches:
+        for puff in batch:
+            west = min(west, puff["east"] - 3 * puff["sx"])
+            east = max(east, puff["east"] + 3 * puff["sx"])
+            south = min(south, puff["north"] - 3 * puff["sy"])
+            north = max(north, puff["north"] + 3 * puff["sy"])
+    reasons = ["Finite grid covers parcel centers plus three dispersion sigmas; Gaussian tails outside are omitted."]
+    if max(abs(west), abs(east), abs(south), abs(north)) > 20_000:
+        reasons.append("Advected path or dispersion extends beyond the 20 km per-axis source domain cap.")
+    west, east = max(-20_000.0, west), min(20_000.0, east)
+    south, north = max(-20_000.0, south), min(20_000.0, north)
+    # Clip at valid geographic bounds; local planar transport is unreliable near poles.
+    west = max(west, (-180 - source.longitude) * longitude_scale)
+    east = min(east, (180 - source.longitude) * longitude_scale)
+    south = max(south, (-90 - source.latitude) * 111_320)
+    north = min(north, (90 - source.latitude) * 111_320)
+    if abs(source.latitude) > 80 or abs(source.longitude) > 179:
+        reasons.append("Polar/date-line coverage is clipped; local planar coordinates are an approximation.")
+    resolution = max(50.0, ceil(max(east - west, north - south) / 20 / 50) * 50.0)
+    columns = max(1, ceil((east - west) / resolution))
+    rows = max(1, ceil((north - south) / resolution))
 
-    return PlumeFrame(
-        scenarioId=scenario.scenarioId,
-        scenarioVersion=scenario.version,
-        timeMinutes=time_minutes,
-        particles=particles,
-        volumeCells=volumes,
-        buildingContamination=_building_contamination(scenario, context, time_minutes),
-        surfaceZones=_surface_zones(scenario, particles, time_minutes),
-        maxConcentration=max_concentration,
-        assumptions=["Real-time plume projection from wind, release, terrain, and hazard inputs."],
+    def coordinates(x: float, y: float) -> list[float]:
+        return [source.longitude + x / longitude_scale, source.latitude + y / 111_320]
+
+    building_inputs = context.buildings[:250] if context else []
+    receptors = [((building.longitude - source.longitude) * longitude_scale,
+                  (building.latitude - source.latitude) * 111_320) for building in building_inputs]
+    receptors.extend(((west + column * resolution + min(east, west + (column + 1) * resolution)) / 2,
+                      (south + row * resolution + min(north, south + (row + 1) * resolution)) / 2)
+                     for column in range(columns) for row in range(rows))
+    points = np.asarray(receptors, dtype=np.float64)
+    concentrations = np.zeros((len(receptors), len(times)), dtype=np.float64)
+    for index, batch in enumerate(fields):
+        if not batch:
+            continue
+        puff_fields = np.asarray(batch, dtype=np.float64)
+        dx = (points[:, 0, None] - puff_fields[None, :, 0]) * puff_fields[None, :, 2]
+        dy = (points[:, 1, None] - puff_fields[None, :, 1]) * puff_fields[None, :, 3]
+        horizontal = dx * dx + dy * dy
+        contributions = np.exp(-0.5 * horizontal) * puff_fields[None, :, 4]
+        contributions[horizontal > 36] = 0
+        concentrations[:, index] = contributions.sum(axis=1)
+    receptor_values = iter(concentrations.tolist())
+
+    def metrics(x: float, y: float, polygon: list[list[float]]) -> ExposureMetrics:
+        values = next(receptor_values)
+        cumulative = [0.0]
+        for previous, current in zip(values, values[1:]):
+            cumulative.append(cumulative[-1] + (previous + current) * 2.5)
+        mean = cumulative[-1] / 120
+        band = band_for(scenario, mean)
+        lon, lat = coordinates(x, y)
+        return ExposureMetrics(longitude=lon, latitude=lat, polygon=polygon,
+            peakConcentration=max(values), meanConcentration=mean,
+            timeIntegratedConcentration=cumulative[-1], cumulativeTimeIntegratedConcentration=cumulative,
+            band=band, color=_band_color(band))
+
+    buildings = []
+    outside = 0
+    for building in (context.buildings[:250] if context else []):
+        x = (building.longitude - source.longitude) * longitude_scale
+        y = (building.latitude - source.latitude) * 111_320
+        outside += int(not (west <= x <= east and south <= y <= north))
+        value = metrics(x, y, building.polygon)
+        buildings.append(BuildingExposure(**value.model_dump(), footprintId=building.footprintId, displayName=building.displayName))
+    areas = []
+    for column in range(columns):
+        left, right = west + column * resolution, min(east, west + (column + 1) * resolution)
+        for row in range(rows):
+            bottom, top = south + row * resolution, min(north, south + (row + 1) * resolution)
+            polygon = [coordinates(left, bottom), coordinates(right, bottom), coordinates(right, top), coordinates(left, top), coordinates(left, bottom)]
+            value = metrics((left + right) / 2, (bottom + top) / 2, polygon)
+            areas.append(GridExposure(**value.model_dump(), cellId=f"exposure-{column}-{row}", displayName=f"Outdoor area {column + 1}-{row + 1}"))
+    unit = "ppm" if scenario.hazard.category == "CHEMICAL" and scenario.hazard.molecularWeightGPerMol else "mg/m³"
+    origin = scenario.incidentStartedAt
+    if origin.tzinfo is None:
+        origin = origin.replace(tzinfo=timezone.utc)
+    lower, upper = coordinates(west, south), coordinates(east, north)
+    return ExposureResponse(
+        scenarioId=scenario.scenarioId, scenarioVersion=scenario.version, location=scenario.location, sourceLocation=source,
+        startAt=origin.isoformat(), endAt=(origin + timedelta(minutes=120)).isoformat(),
+        concentrationUnit=unit, exposureUnit="ppm·min" if unit == "ppm" else "mg·min/m³",
+        thresholds={"trace": scenario.hazard.traceThreshold, "pel": scenario.hazard.pelThreshold, "idlh": scenario.hazard.idlhThreshold},
+        buildings=buildings, areas=areas, gridResolutionMeters=resolution, domainTruncated=True,
+        domain=ExposureDomain(bounds={"west": lower[0], "south": lower[1], "east": upper[0], "north": upper[1]},
+            localBoundsMeters={"west": west, "south": south, "east": east, "north": north},
+            resolutionMeters=resolution, truncated=True, truncationReasons=reasons, buildingsOutsideGrid=outside),
+        dataAvailability={
+            "buildings": f"{len(buildings)} supplied footprints" if buildings else "UNAVAILABLE: no building footprints supplied; no house-level inference",
+            "weather": f"{scenario.weather.source}; scenario timeline" if scenario.weatherTimeline else f"{scenario.weather.source}; constant scenario weather (forecast timeline unavailable)",
+            "context": "SUPPLIED" if context else "UNAVAILABLE: no context supplied; scenario-only obstacles",
+            "personalDose": "UNAVAILABLE: breathing rate, occupancy, indoor infiltration and PPE are not modeled",
+            "population": "UNAVAILABLE", "exceedanceDuration": "NOT_COMPUTED: five-minute samples may miss short peaks",
+        },
+        assumptions=[
+            "Fixed incident T+0–120 minute forecast, not a rolling window from the current playback time.",
+            "Outdoor concentration at 2 m above ground; building and grid centroid samples, not indoor or polygon averages.",
+            "Trapezoidal integration of 25 samples at five-minute intervals; peaks between samples may be missed.",
+            "Colors compare the 120-minute MEAN concentration with scenario TRACE/PEL/IDLH reference thresholds; not cumulative-dose limits or validated two-hour safety criteria.",
+            "Illustrative Gaussian puff transport with heuristic obstacle deflection; not validated emergency guidance or CFD.",
+            "Pressurization, explosion and gas density modify approximate source rise only; no blast, combustion or dense-gas CFD is modeled. Mixed-mode continuous and impulse masses are additive.",
+            "At most 400 grid cells and 250 supplied buildings; adaptive 50–2000 m grid, 20 km per-axis domain cap; building centroids outside the grid are still sampled.",
+            "Uses submitted scenario weather, timeline, source pin, release and hazard; no network lookup. Context supplies building obstacles only.",
+            "Cumulative values align with startMinutes + index * timeStepMinutes; no radiological or biological dose conversion.",
+        ],
+        disclaimer="Outdoor modeled exposure, not inhaled/absorbed dose; does not account for indoors, occupancy or PPE; no safe/risk thresholds inferred.",
     )
+
+
+@lru_cache(maxsize=4)
+def _cached_exposure(payload: str) -> ExposureResponse:
+    update = ScenarioPatch.model_validate_json(payload)
+    return make_exposure(update.scenario, update.context)
+
+
+@app.post("/api/exposure", response_model=ExposureResponse)
+def post_exposure(update: ScenarioPatch) -> ExposureResponse:
+    # Full validated input includes scenario/context revisions; no stale ID-only hits.
+    return _cached_exposure(update.model_dump_json()).model_copy(deep=True)
 
 
 @app.get("/api/health")
@@ -660,12 +1010,13 @@ def map_session(mode: Literal["OPEN_3D", "PHOTOREALISTIC"] = "PHOTOREALISTIC") -
 
 @app.get("/api/scenario", response_model=Scenario)
 def get_scenario() -> Scenario:
-    return Scenario()
+    return scenario_with_context(get_live_context(Location().latitude, Location().longitude))
 
 
 def scenario_with_context(context: ContextSnapshot) -> Scenario:
     """Apply the cached provider snapshot before any physics frame is generated."""
     return Scenario(
+        incidentStartedAt=_utc_now(),
         location=Location(latitude=context.latitude, longitude=context.longitude),
         weather=Weather(
             windSpeedMetersPerSecond=context.weather.windSpeedMetersPerSecond,
@@ -682,8 +1033,8 @@ def scenario_with_context(context: ContextSnapshot) -> Scenario:
 
 @app.get("/api/bootstrap", response_model=BootstrapResponse)
 def get_bootstrap(
-    latitude: float = 40.3573,
-    longitude: float = -74.6672,
+    latitude: float = 40.360556,
+    longitude: float = -74.6542123,
     mapMode: Literal["OPEN_3D", "PHOTOREALISTIC"] = "PHOTOREALISTIC",
 ) -> BootstrapResponse:
     """Build the initial scenario and plume from one cached context lookup."""
@@ -706,7 +1057,7 @@ def get_hazards() -> dict[str, Hazard]:
 
 
 @app.get("/api/context", response_model=ContextSnapshot)
-def get_context(latitude: float = 40.3573, longitude: float = -74.6672) -> ContextSnapshot:
+def get_context(latitude: float = 40.360556, longitude: float = -74.6542123) -> ContextSnapshot:
     if not -90.0 <= latitude <= 90.0 or not -180.0 <= longitude <= 180.0:
         raise HTTPException(status_code=422, detail="coordinates are outside the valid geographic range")
     return demo_context(latitude, longitude)
@@ -714,8 +1065,8 @@ def get_context(latitude: float = 40.3573, longitude: float = -74.6672) -> Conte
 
 @app.get("/api/context/live", response_model=ContextSnapshot)
 def get_live_context_endpoint(
-    latitude: float = 40.3573,
-    longitude: float = -74.6672,
+    latitude: float = 40.360556,
+    longitude: float = -74.6542123,
     destinationLatitude: float | None = None,
     destinationLongitude: float | None = None,
 ) -> ContextSnapshot:
@@ -727,8 +1078,8 @@ def get_live_context_endpoint(
 
 @app.get("/api/plume", response_model=PlumeFrame)
 def get_plume(timeMinutes: int = 30) -> PlumeFrame:
-    scenario = Scenario()
-    return make_frame(scenario, max(0, min(120, timeMinutes)))
+    context = get_live_context(Location().latitude, Location().longitude)
+    return make_frame(scenario_with_context(context), max(0, min(120, timeMinutes)), context)
 
 
 @app.post("/api/plume", response_model=PlumeFrame)
@@ -752,23 +1103,79 @@ def dispatch(request: DispatchRequest) -> DispatchResponse:
     for command in decision.commands:
         value = (command.value or "").strip()
         normalized_value = value.upper()
-        if command.commandType == "TRIGGER_EVENT" and normalized_value == "EXPLOSION":
-            scenario.release.hasExploded = True
-            scenario.release.rateKgPerSecond = min(1000.0, scenario.release.rateKgPerSecond * 1.35)
-        elif command.commandType == "UPDATE_RELEASE":
-            if normalized_value in {"EXPLODED", "EXPLOSION"} and not scenario.release.hasExploded:
-                scenario.release.hasExploded = True
-                scenario.release.rateKgPerSecond = min(1000.0, scenario.release.rateKgPerSecond * 1.35)
+        if (command.commandType == "TRIGGER_EVENT" and normalized_value == "EXPLOSION") or (command.commandType == "UPDATE_RELEASE" and normalized_value in {"EXPLODED", "EXPLOSION"}):
+            release = scenario.release
+            if not release.hasExploded:
+                release.hasExploded = True
+                release.impulseTimeMinutes = request.timeMinutes
+                if release.impulseMassKg > 0:
+                    if release.mode == "CONTINUOUS":
+                        release.mode = "CONTINUOUS_THEN_IMPULSIVE"
+                    decision.assistantText = "Explosion recorded at the selected simulation time using the configured impulse mass. Continuous leak rate is unchanged."
+                else:
+                    decision.assistantText = "Explosion recorded, but additional released mass is unknown. The continuous leak rate is unchanged; no explosion mass has been invented. Set impulse mass and release mode to model the added release."
+                    decision.clarifyingQuestions = ["How many kilograms were released by the explosion?"]
         elif command.commandType == "UPDATE_WEATHER":
+            start = request.timeMinutes
+            previous = [_weather_sample_at(scenario, minute).model_copy(update={"minutesFromNow": minute}) for minute in range(0, 121, 5)]
+            # Preserve past knots; manual changes affect future transport, not old coordinates.
+            for sample in previous:
+                if sample.minutesFromNow <= start:
+                    continue
+                if normalized_value == "INCREASE_WIND_1_MPS":
+                    sample.windSpeedMetersPerSecond = min(80, sample.windSpeedMetersPerSecond + 1)
+                elif normalized_value == "DECREASE_WIND_1_MPS":
+                    sample.windSpeedMetersPerSecond = max(0, sample.windSpeedMetersPerSecond - 1)
+                elif normalized_value.startswith("DIRECTION_"):
+                    try:
+                        sample.windDirectionFromDegrees = float(normalized_value.removeprefix("DIRECTION_")) % 360
+                    except ValueError:
+                        continue
+                sample.source = "DEMO"
+                sample.sampleKind = "MANUAL_OVERRIDE"
+            scenario.weatherTimeline = previous
             if normalized_value == "INCREASE_WIND_1_MPS":
-                scenario.weather.windSpeedMetersPerSecond = min(80.0, scenario.weather.windSpeedMetersPerSecond + 1.0)
+                scenario.weather.windSpeedMetersPerSecond = min(80, scenario.weather.windSpeedMetersPerSecond + 1)
             elif normalized_value == "DECREASE_WIND_1_MPS":
-                scenario.weather.windSpeedMetersPerSecond = max(0.0, scenario.weather.windSpeedMetersPerSecond - 1.0)
-        elif command.commandType == "DEPLOY_UNIT" and value:
-            scenario.location.label = f"{scenario.location.label} | Unit: {value[:80]}"
+                scenario.weather.windSpeedMetersPerSecond = max(0, scenario.weather.windSpeedMetersPerSecond - 1)
+            elif normalized_value.startswith("DIRECTION_"):
+                try:
+                    scenario.weather.windDirectionFromDegrees = float(normalized_value.removeprefix("DIRECTION_")) % 360
+                except ValueError:
+                    pass
+            scenario.weather.source = "MANUAL_OVERRIDE"
+        elif command.commandType == "UPDATE_RELEASE" and normalized_value.startswith("MASS_KG_"):
+            try:
+                mass = max(0.0, min(100_000.0, float(normalized_value.removeprefix("MASS_KG_"))))
+                if scenario.release.mode == "IMPULSIVE":
+                    scenario.release.impulseMassKg = max(0.001, mass)
+                else:
+                    scenario.release.rateKgPerSecond = mass / (scenario.release.durationMinutes * 60)
+            except ValueError:
+                pass
+        elif command.commandType == "ASSIGN_PROPERTY":
+            scenario.activeUnits, clarification = apply_property_assignment(
+                command.value, scenario.activeUnits,
+                request.context.buildings if request.context else [],
+            )
+            if clarification:
+                decision.assistantText = clarification
+                decision.clarifyingQuestions = [clarification]
+            elif not decision.clarifyingQuestions:
+                decision.assistantText = "Known map property assigned to the simulated unit. This records assistance planning only; occupancy, access, safe routing, and live dispatch are not verified."
+        elif command.commandType == "DEPLOY_UNIT":
+            source = scenario.sourceLocation or scenario.location
+            scenario.activeUnits, clarification = apply_unit_deployment(
+                command.value, source.latitude, source.longitude, scenario.activeUnits,
+            )
+            if clarification:
+                decision.assistantText = clarification
+                decision.clarifyingQuestions = [clarification]
+            elif not decision.clarifyingQuestions:
+                decision.assistantText = "Simulated unit position updated on the map; no live dispatch or safe route is implied. Cardinal offsets are approximate distances from source (100 m when unspecified)."
 
     scenario.version += 1
-    frame = make_frame(scenario, 30, request.context)
+    frame = make_frame(scenario, request.timeMinutes, request.context)
     voice_result = synthesize_dispatch(decision.assistantText)
     return DispatchResponse(
         assistantText=decision.assistantText,

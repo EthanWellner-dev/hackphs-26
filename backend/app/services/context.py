@@ -5,7 +5,7 @@ import math
 import os
 import threading
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Literal
 
@@ -34,16 +34,26 @@ class WeatherContext(BaseModel):
     precipitationType: Literal["NONE", "RAIN", "SNOW", "MIXED"] = "NONE"
     source: Provenance
     selectedAt: str
+    retrievedAt: str | None = None
+    provider: str = "Open-Meteo"
+    sampleKind: str = "MODEL_CURRENT"
+    stale: bool = False
+    ageSeconds: float | None = None
+    refreshAfterSeconds: int = 300
+    nativeIntervalMinutes: int = 15
 
 
 class WeatherSample(BaseModel):
-    """A five-minute wind sample used to advect the simulated plume."""
+    """A simulation step, not a claim of five-minute weather observations."""
 
     minutesFromNow: int = Field(ge=0, le=120)
     windSpeedMetersPerSecond: float = Field(ge=0.0, le=80.0)
     windDirectionFromDegrees: float = Field(ge=0.0, le=360.0)
     temperatureCelsius: float
     source: Provenance
+    validAt: str | None = None
+    sampleKind: str = "UNSPECIFIED"
+    nativeIntervalMinutes: int | None = None
 
 
 class AirQualityContext(BaseModel):
@@ -187,40 +197,63 @@ def _wind_speed_meters_per_second(value: Any, unit: Any = "m/s") -> float:
     return speed
 
 
-def normalize_weather_timeline(payload: dict[str, Any], source: Provenance = "LIVE") -> list[WeatherSample]:
-    """Interpolate the provider's hourly forecast into five-minute samples.
+def _parse_time(value: Any) -> datetime | None:
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        return parsed.replace(tzinfo=timezone.utc) if parsed.tzinfo is None else parsed.astimezone(timezone.utc)
+    except (TypeError, ValueError):
+        return None
 
-    Open-Meteo can return km/h unless ``wind_speed_unit=ms`` is requested. The
-    response's unit metadata remains authoritative so cached responses cannot
-    silently inflate plume advection by a factor of 3.6.
-    """
+
+def normalize_weather_timeline(payload: dict[str, Any], source: Provenance = "LIVE", anchor_at: str | None = None) -> list[WeatherSample]:
+    """Timestamp-aligned hourly forecast interpolation; never five-minute observations."""
     hourly = payload.get("hourly") or {}
-    hourly_units = payload.get("hourly_units") or {}
+    times = hourly.get("time") or []
     speeds = hourly.get("wind_speed_10m") or []
     directions = hourly.get("wind_direction_10m") or []
     temperatures = hourly.get("temperature_2m") or []
-    if not speeds or not directions or not temperatures:
-        return []
-    samples: list[WeatherSample] = []
-    speed_unit = hourly_units.get("wind_speed_10m", "m/s")
-    for target_minutes in range(0, 121, 5):
-        position = target_minutes / 60.0
-        lower = min(len(speeds) - 1, int(position))
-        upper = min(len(speeds) - 1, lower + 1)
-        fraction = position - lower
+    current = payload.get("current") or {}
+    anchor = _parse_time(anchor_at) or _parse_time(current.get("time")) or datetime.now(timezone.utc)
+    unit = (payload.get("hourly_units") or {}).get("wind_speed_10m", "m/s")
+    knots: list[tuple[datetime, float, float, float]] = []
+    for timestamp, speed, direction, temperature in zip(times, speeds, directions, temperatures):
+        valid = _parse_time(timestamp)
         try:
-            direction_delta = (float(directions[upper]) - float(directions[lower]) + 540.0) % 360.0 - 180.0
-            lower_speed = _wind_speed_meters_per_second(speeds[lower], speed_unit)
-            upper_speed = _wind_speed_meters_per_second(speeds[upper], speed_unit)
-            samples.append(WeatherSample(
-                minutesFromNow=target_minutes,
-                windSpeedMetersPerSecond=lower_speed + (upper_speed - lower_speed) * fraction,
-                windDirectionFromDegrees=(float(directions[lower]) + direction_delta * fraction) % 360.0,
-                temperatureCelsius=float(temperatures[lower]) + (float(temperatures[upper]) - float(temperatures[lower])) * fraction,
-                source=source,
-            ))
+            if valid is not None:
+                knots.append((valid, _wind_speed_meters_per_second(speed, unit), float(direction) % 360, float(temperature)))
         except (TypeError, ValueError):
             continue
+    # A timestamped current model sample anchors t=0 while future knots remain forecasts.
+    current_time = _parse_time(current.get("time"))
+    if current_time is not None:
+        try:
+            current_unit = (payload.get("current_units") or {}).get("wind_speed_10m", unit)
+            current_knot = (current_time, _wind_speed_meters_per_second(current["wind_speed_10m"], current_unit), float(current["wind_direction_10m"]) % 360, float(current["temperature_2m"]))
+            knots = [knot for knot in knots if knot[0] != current_time]
+            knots.append(current_knot)
+        except (KeyError, TypeError, ValueError):
+            pass
+    knots.sort(key=lambda knot: knot[0])
+    if not knots:
+        return []
+    samples: list[WeatherSample] = []
+    for minute in range(0, 121, 5):
+        target = anchor + timedelta(minutes=minute)
+        before = max((knot for knot in knots if knot[0] <= target), default=knots[0], key=lambda knot: knot[0])
+        after = min((knot for knot in knots if knot[0] >= target), default=knots[-1], key=lambda knot: knot[0])
+        span = (after[0] - before[0]).total_seconds()
+        fraction = max(0.0, min(1.0, (target - before[0]).total_seconds() / span)) if span > 0 else 0.0
+        delta = (after[2] - before[2] + 540.0) % 360.0 - 180.0
+        samples.append(WeatherSample(
+            minutesFromNow=minute,
+            windSpeedMetersPerSecond=before[1] + (after[1] - before[1]) * fraction,
+            windDirectionFromDegrees=(before[2] + delta * fraction) % 360,
+            temperatureCelsius=before[3] + (after[3] - before[3]) * fraction,
+            source=source,
+            validAt=target.isoformat().replace("+00:00", "Z"),
+            sampleKind="INTERPOLATED_FORECAST" if span > 0 else ("MODEL_CURRENT" if target == current_time else "FORECAST" if target == before[0] else "PERSISTENCE"),
+            nativeIntervalMinutes=60,
+        ))
     return samples
 
 
@@ -238,14 +271,22 @@ def normalize_open_meteo(payload: dict[str, Any], selected_at: str | None = None
     snowfall = current.get("snowfall")
     if speed is None or direction is None or temperature is None:
         hourly = payload.get("hourly") or {}
-        speed = (hourly.get("wind_speed_10m") or [None])[0]
+        now = datetime.now(timezone.utc)
+        timestamped = [(index, _parse_time(value)) for index, value in enumerate(hourly.get("time") or [])]
+        valid_times = [(index, value) for index, value in timestamped if value is not None]
+        index = min(valid_times, key=lambda pair: abs((pair[1] - now).total_seconds()))[0] if valid_times else 0
+        def hourly_value(name: str) -> Any:
+            values = hourly.get(name) or []
+            return values[index] if index < len(values) else None
+        speed = hourly_value("wind_speed_10m")
         speed_unit = hourly_units.get("wind_speed_10m", "m/s")
-        direction = (hourly.get("wind_direction_10m") or [None])[0]
-        temperature = (hourly.get("temperature_2m") or [None])[0]
-        precipitation = (hourly.get("precipitation") or [None])[0]
-        precipitation_probability = (hourly.get("precipitation_probability") or [None])[0]
-        rain = (hourly.get("rain") or [None])[0]
-        snowfall = (hourly.get("snowfall") or [None])[0]
+        direction = hourly_value("wind_direction_10m")
+        temperature = hourly_value("temperature_2m")
+        precipitation = hourly_value("precipitation")
+        precipitation_probability = hourly_value("precipitation_probability")
+        rain = hourly_value("rain")
+        snowfall = hourly_value("snowfall")
+        selected_at = selected_at or (hourly.get("time") or [""])[index]
     if speed is None or direction is None or temperature is None:
         raise ValueError("Open-Meteo response does not contain a complete weather sample")
     precipitation_rate = float(precipitation if precipitation is not None else (rain or 0.0) + (snowfall or 0.0))
@@ -265,7 +306,9 @@ def normalize_open_meteo(payload: dict[str, Any], selected_at: str | None = None
         precipitationProbabilityPercent=float(precipitation_probability) if precipitation_probability is not None else None,
         precipitationType=precipitation_type,
         source=source,
-        selectedAt=selected_at or str(current.get("time") or _now()),
+        selectedAt=str(selected_at or current.get("time") or ""),
+        sampleKind="MODEL_CURRENT" if current.get("wind_speed_10m") is not None else "FORECAST",
+        nativeIntervalMinutes=15 if current.get("wind_speed_10m") is not None else 60,
     )
 
 
@@ -487,6 +530,8 @@ def demo_context(latitude: float, longitude: float) -> ContextSnapshot:
             precipitationType="NONE",
             source="DEMO",
             selectedAt=timestamp,
+            provider="Demo fixture",
+            sampleKind="DEMO",
         ),
         weatherTimeline=[WeatherSample(minutesFromNow=minutes, windSpeedMetersPerSecond=4.5, windDirectionFromDegrees=225.0, temperatureCelsius=18.0, source="DEMO") for minutes in range(0, 121, 5)],
         airQuality=AirQualityContext(source="DEMO", selectedAt=timestamp),
@@ -534,6 +579,8 @@ def _cache_ttl_seconds(label: str) -> float | None:
         value = float(raw_value)
     except ValueError:
         return default_ttls.get(label, 900.0)
+    if label == "Weather provider":
+        return min(300.0, max(0.0, value)) if math.isfinite(value) else 300.0
     return None if value < 0 else value
 
 
@@ -614,6 +661,38 @@ def get_live_context(
             entry["event"].set()
 
 
+def _noaa_weather_fallback(latitude: float, longitude: float, cache_dir: Path, key: str, config: ProviderConfig, client: httpx.Client | None) -> tuple[dict[str, Any] | None, Provenance]:
+    """NOAA hourly model forecast fallback, explicitly not station observations."""
+    try:
+        points, _, _ = fetch_json_with_cache(f"https://api.weather.gov/points/{latitude:.4f},{longitude:.4f}", cache_dir / f"noaa-points-{key}.json", config=config, client=client, max_age_seconds=86400)
+        url = (points.get("properties") or {}).get("forecastHourly", "")
+        if not url.startswith("https://api.weather.gov/"):
+            return None, "DEMO"
+        payload, source, _ = fetch_json_with_cache(url, cache_dir / f"noaa-weather-{key}.json", config=config, client=client, max_age_seconds=300)
+        periods = (payload.get("properties") or {}).get("periods") or []
+        compass = {name: index * 22.5 for index, name in enumerate(["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"])}
+        hourly: dict[str, list[Any]] = {name: [] for name in ["time", "wind_speed_10m", "wind_direction_10m", "temperature_2m"]}
+        for period in periods:
+            speed_text = str(period.get("windSpeed", "")).split()
+            speeds = [float(token) for token in speed_text if token.replace(".", "", 1).isdigit()]
+            direction = compass.get(period.get("windDirection"))
+            timestamp = _parse_time(period.get("startTime"))
+            if not speeds or direction is None or timestamp is None:
+                continue
+            temperature = float(period["temperature"])
+            if period.get("temperatureUnit") == "F":
+                temperature = (temperature - 32) * 5 / 9
+            hourly["time"].append(timestamp.isoformat())
+            hourly["wind_speed_10m"].append(_wind_speed_meters_per_second(sum(speeds) / len(speeds), speed_text[-1]))
+            hourly["wind_direction_10m"].append(direction)
+            hourly["temperature_2m"].append(temperature)
+        if not hourly["time"]:
+            return None, "DEMO"
+        return {"hourly": hourly, "hourly_units": {"wind_speed_10m": "m/s"}, "_provider": "NOAA hourly forecast", "_cache_name": f"noaa-weather-{key}.json"}, source
+    except (RuntimeError, ValueError, TypeError, KeyError):
+        return None, "DEMO"
+
+
 def _get_live_context_uncached(
     latitude: float,
     longitude: float,
@@ -632,19 +711,36 @@ def _get_live_context_uncached(
     weather_payload, weather_source, weather_warnings = _load_provider_sample(
         f"{_provider_url('OPEN_METEO_BASE_URL', 'https://api.open-meteo.com/v1')}/forecast",
         cache_dir / f"weather-{key}.json",
-        {"latitude": latitude, "longitude": longitude, "current": "temperature_2m,wind_speed_10m,wind_direction_10m,precipitation,rain,snowfall,precipitation_probability", "hourly": "temperature_2m,wind_speed_10m,wind_direction_10m,precipitation,rain,snowfall,precipitation_probability", "wind_speed_unit": "ms", "forecast_days": 2},
+        {"latitude": latitude, "longitude": longitude, "current": "temperature_2m,wind_speed_10m,wind_direction_10m,precipitation,rain,snowfall", "hourly": "temperature_2m,wind_speed_10m,wind_direction_10m,precipitation,rain,snowfall,precipitation_probability", "wind_speed_unit": "ms", "timezone": "UTC", "forecast_hours": 4, "past_hours": 1},
         config,
         client,
         "Weather provider",
         max_age_seconds=_cache_ttl_seconds("Weather provider"),
     )
     warnings.extend(weather_warnings)
+    if weather_payload is None or weather_warnings:
+        fallback_payload, fallback_source = _noaa_weather_fallback(latitude, longitude, cache_dir, key, config, client)
+        if fallback_payload is not None and (fallback_source == "LIVE" or weather_payload is None):
+            weather_payload, weather_source = fallback_payload, fallback_source
+            warnings.append("Primary weather unavailable; using NOAA hourly forecast, not station observations.")
     if weather_payload is None:
-        demo = demo_context(latitude, longitude)
-        demo.warnings = warnings + demo.warnings
-        return demo
+        weather_payload = {}
+        weather_source = "DEMO"
+        warnings.append("Both weather providers unavailable; other context providers are still queried.")
     try:
         weather = normalize_open_meteo(weather_payload, source=weather_source)
+        cache_path = cache_dir / weather_payload.get("_cache_name", f"weather-{key}.json")
+        retrieved = datetime.fromtimestamp(cache_path.stat().st_mtime, timezone.utc) if cache_path.exists() else datetime.now(timezone.utc)
+        weather.retrievedAt = retrieved.isoformat().replace("+00:00", "Z")
+        selected = _parse_time(weather.selectedAt)
+        weather.ageSeconds = max(0.0, (datetime.now(timezone.utc) - selected).total_seconds()) if selected else None
+        cache_age = (datetime.now(timezone.utc) - retrieved).total_seconds()
+        weather.provider = weather_payload.get("_provider", "Open-Meteo")
+        allowed_age = 5400 if weather.sampleKind == "FORECAST" else 1800
+        weather.stale = selected is None or weather.ageSeconds is None or weather.ageSeconds > allowed_age or cache_age > 300
+        if weather.stale:
+            weather.source = weather_source = "CACHED"
+            warnings.insert(0, "Weather is stale or has no valid provider timestamp; not current observations.")
     except ValueError as error:
         weather = demo_context(latitude, longitude).weather
         weather_source = "DEMO"
@@ -761,7 +857,7 @@ def _get_live_context_uncached(
         latitude=latitude,
         longitude=longitude,
         weather=weather,
-        weatherTimeline=(normalize_weather_timeline(weather_payload, source=weather_source) or [WeatherSample(minutesFromNow=minutes, windSpeedMetersPerSecond=weather.windSpeedMetersPerSecond, windDirectionFromDegrees=weather.windDirectionFromDegrees, temperatureCelsius=weather.temperatureCelsius, source=weather_source) for minutes in range(0, 121, 5)])[:25],
+        weatherTimeline=(normalize_weather_timeline(weather_payload, source=weather_source, anchor_at=_now()) or [WeatherSample(minutesFromNow=minutes, windSpeedMetersPerSecond=weather.windSpeedMetersPerSecond, windDirectionFromDegrees=weather.windDirectionFromDegrees, temperatureCelsius=weather.temperatureCelsius, source=weather_source) for minutes in range(0, 121, 5)])[:25],
         airQuality=air_quality,
         elevation=elevation,
         alerts=alerts,

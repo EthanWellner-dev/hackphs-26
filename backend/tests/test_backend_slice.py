@@ -23,7 +23,8 @@ def test_plume_uses_five_minute_wind_timeline_and_varies_vertical_shape() -> Non
     assert len(scenario.weatherTimeline) == 3
     assert len({round(p.altitudeMeters, 2) for p in frame.particles}) > 4
     assert len({round(v.heightMeters, 2) for v in frame.volumeCells}) > 4
-    assert frame.assumptions == ["Real-time plume projection from wind, release, terrain, and hazard inputs."]
+    assert any("not validated" in assumption for assumption in frame.assumptions)
+    assert max(p.altitudeMeters for p in frame.particles) - min(p.altitudeMeters for p in frame.particles) > 20.0
 
 
 def test_continuous_release_is_present_before_duration_but_impulse_is_time_gated() -> None:
@@ -249,13 +250,19 @@ def test_dispatch_applies_explosion_wind_and_deployment(monkeypatch) -> None:
     assert explosion.status_code == 200
     exploded = explosion.json()["scenario"]
     assert exploded["release"]["hasExploded"] is True
-    assert exploded["release"]["rateKgPerSecond"] == 20.25
+    assert exploded["release"]["rateKgPerSecond"] == Scenario().release.rateKgPerSecond
+    assert exploded["release"]["impulseMassKg"] == 0
+    assert explosion.json()["clarifyingQuestions"]
 
     weather = asyncio.run(_request("post", "/api/dispatch", json={"text": "Increase wind", "scenario": scenario}))
     assert weather.json()["scenario"]["weather"]["windSpeedMetersPerSecond"] == 5.5
 
     deployment = asyncio.run(_request("post", "/api/dispatch", json={"text": "Deploy Engine 4", "scenario": scenario}))
-    assert "Unit: Deploy Engine 4" in deployment.json()["scenario"]["location"]["label"]
+    assert deployment.json()["scenario"]["location"]["label"] == scenario["location"]["label"]
+    assert deployment.json()["scenario"]["activeUnits"] == []
+    assert deployment.json()["clarifyingQuestions"]
+    located = asyncio.run(_request("post", "/api/dispatch", json={"text": "Deploy Engine 4 to source", "scenario": scenario}))
+    assert located.json()["scenario"]["activeUnits"][0]["unitId"] == "engine-4"
 
 
 def test_voice_missing_configuration_is_text_only(monkeypatch, tmp_path) -> None:

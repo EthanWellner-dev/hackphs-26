@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 from collections import OrderedDict
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal
@@ -23,6 +24,7 @@ CommandType = Literal[
     "UPDATE_WEATHER",
     "TRIGGER_EVENT",
     "DEPLOY_UNIT",
+    "ASSIGN_PROPERTY",
     "NO_OP",
 ]
 
@@ -56,10 +58,18 @@ _UNKNOWN_ANSWERS = ("don't know", "do not know", "unknown", "not sure", "unsure"
 
 SYSTEM_INSTRUCTION = """You are Aero-Hazard's emergency operations dispatcher.
 Return only JSON matching the supplied schema. Keep assistantText concise and operational.
-You may propose only UPDATE_RELEASE, UPDATE_WEATHER, TRIGGER_EVENT, DEPLOY_UNIT, or NO_OP.
+LIVE means recently fetched provider model data, not a local observation. CACHED may be stale.
+Never invent wind, population counts, concentrations, or precision beyond provider cadence.
+When the operator reports wind direction, emit UPDATE_WEATHER value DIRECTION_<degrees>, meteorological direction FROM.
+For release mass changes emit UPDATE_RELEASE value MASS_KG_<number>; for wind speed use INCREASE_WIND_1_MPS or DECREASE_WIND_1_MPS.
+You may propose only UPDATE_RELEASE, UPDATE_WEATHER, TRIGGER_EVENT, DEPLOY_UNIT, ASSIGN_PROPERTY, or NO_OP.
 When required incident details are missing, ask one concise clarifying question at a time.
 An operator may answer that they do not know; accept that answer without guessing, state the conservative simulation assumption, and ask the next question.
 Never invent safety thresholds, PPE requirements, coordinates, or live resources.
+DEPLOY_UNIT value must preserve the operator's unit label and supplied location, e.g. "deploy Engine 4 at 40.36, -74.65" or "deploy Ambulance 2 to source". A JSON string containing label, latitude, longitude and optional unitId is also accepted only for coordinates explicitly supplied by the operator.
+Unit details may be supplied explicitly as '; teamType: hazmat; equipment: radio, monitor; task: assist residents', or JSON fields teamType, equipment (string array), task. Never invent equipment or assignments.
+For property assignment emit ASSIGN_PROPERTY value 'assign <operator-supplied building name or footprintId> to <existing unit label or ID>', or a JSON string with propertyId/propertyName and unitId/unitLabel. The server validates against loaded map buildings; never invent homes or claim known occupancy. Do not include assignments inside DEPLOY_UNIT.
+Never turn street names into coordinates. Ask for coordinates or map place selection instead. Cardinal offsets from source are simulated, not geocoded. Do not claim actual dispatch or a safe route.
 This is a simulated decision-support tool, not an emergency authority.
 """
 
@@ -123,6 +133,27 @@ def _deterministic_decision(text: str, scenario: Any) -> AgentDecision:
     if intake_question is not None:
         return intake_question
     commands: list[AgentCommand] = []
+    if re.match(r"(?:please\s+)?assign\b", normalized.strip()):
+        return AgentDecision(
+            assistantText="Checking the loaded map property and existing simulated unit; occupancy and access are not verified.",
+            commands=[AgentCommand(commandType="ASSIGN_PROPERTY", value=text)],
+            confidence="MEDIUM",
+        )
+    if re.search(r"\bdeploy\b", normalized):
+        return AgentDecision(
+            assistantText="Updating the simulated unit position only; no live dispatch or safe route is implied. Cardinal offsets are approximate distances from source (100 m when unspecified).",
+            commands=[AgentCommand(commandType="DEPLOY_UNIT", value=text)],
+            confidence="MEDIUM",
+        )
+    mass_match = re.search(r"\b(\d+(?:\.\d+)?)\s*(?:kg|kilograms?)\b", normalized)
+    if mass_match:
+        mass = min(100_000.0, float(mass_match.group(1)))
+        return AgentDecision(assistantText=f"Simulation release mass set to {mass:g} kg over the configured duration; this is not a measured concentration.", commands=[AgentCommand(commandType="UPDATE_RELEASE", value=f"MASS_KG_{mass}")], confidence="HIGH")
+    if "wind" in normalized:
+        directions = {"northeast": 45, "southeast": 135, "southwest": 225, "northwest": 315, "north": 0, "east": 90, "south": 180, "west": 270}
+        for name, degrees in directions.items():
+            if re.search(rf"\b{name}\b", normalized):
+                return AgentDecision(assistantText=f"Future simulated wind set from {name}; previous plume transport is preserved.", commands=[AgentCommand(commandType="UPDATE_WEATHER", value=f"DIRECTION_{degrees}")], confidence="MEDIUM")
     if "explod" in normalized or "blast" in normalized:
         commands.append(AgentCommand(commandType="TRIGGER_EVENT", value="EXPLOSION"))
         return AgentDecision(
@@ -133,16 +164,9 @@ def _deterministic_decision(text: str, scenario: Any) -> AgentDecision:
     if "increase" in normalized and "wind" in normalized:
         commands.append(AgentCommand(commandType="UPDATE_WEATHER", value="INCREASE_WIND_1_MPS"))
         return AgentDecision(
-            assistantText="Wind speed override increased by one meter per second for this simulation.",
+            assistantText="Wind speed override increased by one meter per second for this simulation; live weather remains the baseline.",
             commands=commands,
             confidence="HIGH",
-        )
-    if "deploy" in normalized or "engine" in normalized:
-        commands.append(AgentCommand(commandType="DEPLOY_UNIT", value=text[:120]))
-        return AgentDecision(
-            assistantText="Unit deployment noted. Maintain an upstream position outside the visible plume boundary.",
-            commands=commands,
-            confidence="MEDIUM",
         )
     return AgentDecision(
         assistantText="I can help with that. What changed at the incident: release status, wind, explosion, or unit deployment? If you do not know, say unknown and I will keep the current assumption.",

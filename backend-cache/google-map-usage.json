@@ -1,12 +1,12 @@
 {
   "activeSession": {
-    "expiresAt": "2026-10-11T05:13:25.758746+00:00",
-    "sessionId": "9482568cae0843febd8be0b740dc2fc8"
+    "expiresAt": "2026-10-11T11:23:46.522927+00:00",
+    "sessionId": "7bcbcccc7b904037b4a10eabe09a69e0"
   },
   "day": "2026-10-11",
-  "daySessions": 1,
-  "hour": "2026-10-11T02",
+  "daySessions": 3,
+  "hour": "2026-10-11T08",
   "hourSessions": 1,
   "month": "2026-10",
-  "monthSessions": 2
+  "monthSessions": 4
 }

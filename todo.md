@@ -1,193 +1,182 @@
-# Aero-Hazard / Plume — Build Progress
+﻿# Aero-Hazard / Plume — Build Progress
 
-This checklist is the project progress bar. It is derived from [`project_outline.md`](./project_outline.md) and should be updated whenever a feature, test, or demo deliverable changes status.
+This checklist audits the goals in [project_outline.md](./project_outline.md) against the current implementation. **Audit date: 2026-10-11. No completion percentage is reported:** the previous 84% and item totals mixed obsolete implementations, partial features and unverified rehearsals.
 
-## Overall progress
+Status: `[x]` implemented with focused evidence **at the stated scope** · `[~]` partial / integration or validation pending · `[ ]` not completed · `[!]` externally blocked. A backend API or helper test does not establish a working browser feature. Checked prototype behavior is not scientific or operational validation.
 
-**Progress: 68%** `██████████████░░░░░░`
+## Evidence and current architecture
 
-- **Completed:** 53 checklist items
-- **In progress:** 0 checklist items
-- **Remaining:** 22 checklist items
-- **Last updated:** 2026-10-10
+- **Backend:** [API and model implementation](./backend/app/main.py), [API contracts](./backend/tests/test_api_contracts.py), [model/dispatch tests](./backend/tests/test_backend_slice.py), [transport tests](./backend/tests/test_live_transport.py), [weather orchestration](./backend/tests/test_weather_orchestration.py).
+- **Providers:** [context implementation](./backend/app/services/context.py), [context tests](./backend/tests/test_context.py), [Gemini tests](./backend/tests/test_agent_provider.py), [voice tests](./backend/tests/test_voice_provider.py), [map guard tests](./backend/tests/test_map_guard.py).
+- **Browser:** [active MapLibre entrypoint](./frontend/src/main.js), [HTML dashboard](./frontend/index.html), [plume layer](./frontend/src/plumeLayer.js), [timeline tests](./frontend/src/timeline.test.ts), [dispatch helper tests](./frontend/src/aiDispatch.test.ts), [playback tests](./frontend/src/playback.test.ts), [geometry tests](./frontend/src/plumeLayer.test.js). The current app is Vite plus JavaScript/TypeScript and MapLibre/Three.js, **not a mounted React/Cesium application**. Installed dependencies are not implemented features.
+- **Recorded evidence, not final integration sign-off:** the coordinator reports a historical 85-backend/15-frontend baseline, then **15 mesh tests and 11 playback/cache/dispatch tests passing** during the current work. These are scoped run results, not a cumulative count or browser acceptance. Backend contract integration is still pending. The [runbook](./docs/PERFORMANCE_RUNBOOK.md#readiness-and-weather-evidence) records backend health/live-weather/mass-scaling smoke evidence. This audit inspected source/tests without rerunning the full suites while implementation agents were active.
+- **Latest checkpoint:** the coordinator reports a production build and **28 frontend tests passing before the new WebM recording and chat/voice responder additions**. Those additions and backend responder parsing are still pending integration; the checkpoint does not establish their end-to-end behavior.
+- **Research boundary:** [dilution and exposure research](./docs/PLUME_DILUTION_AND_EXPOSURE_RESEARCH.md) documents a provisional renderer-only floor at 1% of configured trace concentration. This is neither a health threshold nor physical mass removal; transport, overlap sums, exposure and mass accounting must retain hidden contributions. Summed-field and lower-floor comparisons remain validation requirements.
+- **Planning only:** [build plan](./docs/JUDGE_READY_BUILD_PLAN.md), [request budget](./docs/API_CALL_BUDGET.md), [runbook](./docs/PERFORMANCE_RUNBOOK.md), [rehearsal script](./docs/DEMO_REHEARSAL_SCRIPT.md). Their proposed Cesium/local-safe paths and failure-drill instructions are not evidence that the active browser implements or has passed them.
 
-> Status: `[x]` complete · `[~]` in progress · `[ ]` not started · `[!]` blocked or needs a decision
+## Urgent corrections and current integration gate
 
-## 1. Foundation and project setup — Hours 00–03
+- [~] Fetch weather at startup and refresh every five minutes with source, age and failure labels. Backend NOAA fallback and preservation of non-weather context are tested; final browser refresh/failure evidence remains pending.
+- [x] Preserve incident epoch through API serialization and integrate changing wind history in five-minute transport steps. Evidence: transport, hazard-rendering and weather-orchestration tests.
+- [x] Record the prior backend health, live-bootstrap and release-mass scaling smoke check; 85-test baseline is historical evidence, not sign-off on subsequent changes.
+- [~] Replace screen-space/additive particles with depth-tested map-space geometry; renderer agent owns final cloud/decluttering changes and validation.
+- [~] Render map-anchored approximate terrain/building-aware wind paths and camera-relative wind badge; helper coverage exists, final browser acceptance pending.
+- [~] Derive metrics/legends from the active frame and hazard; remove invented population/property numbers; verify current integration and release-mass edits.
+- [~] Make timeline scrubbing revision-safe, bounded and cached; helper coverage exists, current dispatch/weather integration still requires browser verification.
+- [~] Merge dense overlapping plume parcels into bounded smooth geometry while preserving sparse parcels; do not describe visual shells as scientifically derived exposure thresholds.
+- [~] Play/pause/restart the five-minute forecast through T+120; cancellation/cache helper tests exist, browser acceptance pending.
+- [~] Add two-hour outdoor exposure API and building/area overlays with peak, mean and concentration-time integral click details. Backend and UI work are active; this is **not personal absorbed dose**.
+- [~] Validate geometry budgets, playback cancellation, mass/exposure scaling, API performance and final browser integration before promoting these features.
 
-- [x] Establish the React/Vite frontend shell.
-- [x] Establish the FastAPI backend shell.
-- [x] Define the validated scenario, release, weather, plume, and dispatch contracts.
-- [x] Add a local runnable demo path without provider credentials.
-- [x] Add checked-in venue scenario, weather, context, and terrain fixtures.
-- [ ] Add a shared environment configuration example and startup documentation.
+## 1. Foundation and project setup
 
-## 2. AI dispatcher and voice — Hours 03–07
+- [x] Establish the Vite frontend project and build/test scripts. Evidence: [package.json](./frontend/package.json).
+- [ ] Restore or implement a React component application if retaining that original architecture requirement; React dependencies alone do not meet it.
+- [x] Establish the FastAPI backend and validated baseline scenario, release, weather, plume and dispatch contracts. Evidence: API implementation and contract tests.
+- [x] Provide deterministic backend scenario/context defaults without Gemini, ElevenLabs or Google credentials. This does not promise an offline browser map.
+- [~] Provide a complete no-key local browser demo; MapLibre style/tiles/DEM currently require network access and no full offline scene is verified.
+- [~] Add checked-in venue/weather/context/terrain fixtures. Programmatic scenario/context defaults exist; a packaged offline terrain/building asset path is not established.
+- [~] Add a shared environment example and verified startup documentation. A runbook/tasks exist; environment-example and current-architecture recovery verification remain outstanding.
 
-- [x] Implement deterministic dispatch shortcuts for explosion, wind, deployment, and no-op input.
-- [x] Add structured Gemini response validation with a deterministic fallback.
-- [x] Add bounded caching for repeated dispatcher requests.
-- [x] Add ElevenLabs audio caching and text-only fallback.
-- [x] Test ElevenLabs SDK invocation, MP3 caching, empty audio, provider failure, and dispatch voice response behavior.
-- [ ] Add explicit provider retry/backoff policy for transient failures.
-- [x] Add dispatch command coverage for release updates, weather updates, events, and unit deployment.
-- [x] Ask focused intake follow-ups and accept unknown/not-known answers without guessing.
-- [x] Return a complete incident action plan with assumptions and provenance.
-- [x] Add browser audio playback and cached-audio controls.
+## 2. AI dispatcher and voice
 
-## 3. Plume simulation and hazard library — Hours 07–11
+- [x] Implement deterministic single-command shortcuts for explosion, wind, release mass, deployment acknowledgement and no-op input. Evidence: agent, transport and backend-slice tests. This is not arbitrary multi-command planning or real unit deployment.
+- [x] Validate structured Gemini responses and fall back on malformed responses/provider exceptions. Evidence: mocked Gemini tests; live Gemini success is not established by mocks.
+- [x] Bound repeated dispatcher decisions in a 128-entry cache. Evidence: agent implementation and cache tests.
+- [x] Cache ElevenLabs MP3 output and return text-only on missing configuration, empty audio or provider failure. Evidence: mocked voice tests, including SDK invocation and cache behavior.
+- [ ] Add an explicit provider retry/backoff policy for transient AI/audio failures.
+- [~] Cover every release/weather/event/deployment command path; representative commands are tested, not all combinations or free-form commands.
+- [x] Ask deterministic focused follow-ups and accept unknown answers without inventing missing values. Evidence: backend-slice unknown-answer tests; full conversational intake state is not claimed.
+- [x] Return a simulated action-plan object with assumptions, provenance and a simulation disclaimer. Evidence: backend/API plan tests. This does not certify its advice.
+- [~] Render the full action plan, command history and unit acknowledgements in the active UI; coordinator owns current implementation/validation.
+- [ ] Add/verify browser audio playback and cached-audio controls. Backend audio generation alone does not meet this gate.
+- [~] Add browser SpeechRecognition for chat/voice responder commands; the coordinator is implementing transcript review followed by explicit Enter submission, not automatic dispatch. Verify microphone permissions, unsupported-browser/error states and text fallback before completion.
+- [~] Integrate backend responder-command parsing helpers with chat/voice input and actual returned responder state. Backend agent work is active; parser tests alone will not establish browser integration or operational resource tracking.
+- [ ] Validate chat/voice responder commands end to end, including reviewed transcripts, explicit submission, state updates and failure recovery. Speech recognition is distinct from ElevenLabs response playback.
 
-- [x] Implement bounded Gaussian plume approximation.
-- [x] Convert wind source direction into transport direction.
-- [x] Model stability class, source height, pressurization, explosion, heavy-gas adjustment, and ground reflection.
-- [x] Generate particle and volume-cell frames for `T+0` through `T+120` minutes.
-- [x] Add hazard profiles for chlorine, ammonia, methane, iodine-131, cesium-137, and biological aerosols.
-- [ ] Add chemical fate metadata (volatility, deposition/adsorption, persistence, resuspension, and decay) and distinguish airborne concentration from surface loading.
-- [ ] For hazards with surface deposition/adsorption, display simulated candidate sanitation/decontamination zones and affected surfaces; label them non-operational until confirmed by sampling and qualified guidance.
-- [x] Add terrain/building obstruction masks to the solver.
-- [x] Add explicit unknown/out-of-domain band handling.
-- [x] Enforce a documented particle and volume primitive budget.
+## 3. Plume simulation and hazard library
 
-## 4. Context and external data services — Hours 11–15
+- [x] Implement a bounded Gaussian approximation and meteorological FROM-to-transport conversion. Evidence: backend-slice and live-transport tests; not a validated CFD solver.
+- [x] Include heuristic stability, source-height, pressurization, density, ground reflection, decay/settling and precipitation effects. Evidence: model implementation and focused behavior tests; parameters are not calibrated.
+- [~] Verify explosion/release behavior and mass conservation after current backend corrections; do not promise invented extra mass or a fixed 1,000-particle explosion.
+- [x] Generate bounded particle/volume-cell API frames for T+0–120. Evidence: API, hazard-rendering and [performance tests](./backend/tests/test_performance.py). Particle counts vary with transport/fission; old 500/1,000 claims are obsolete.
+- [x] Provide library entries for chlorine, ammonia, methane, iodine-131, cesium-137 and biological aerosol. Evidence: library/threshold tests; radiological/biological mass concentration is not radiation dose or infection risk.
+- [~] Complete chemical-fate metadata and distinguish airborne concentration from surface loading. Prototype retention/persistence/decay fields and candidate surface zones exist; adsorption, volatility, resuspension and physically validated loading do not.
+- [~] Display simulated candidate contaminated surfaces/decontamination zones. Backend `surfaceZones` and candidate-review tests exist; active-map display and reviewed guidance are not complete.
+- [x] Apply bounded supplied terrain/building obstruction heuristics. Evidence: obstruction and spatial-flow tests; this is not terrain-resolved CFD or proof of complete live DEM assimilation.
+- [~] Handle unknown/out-of-domain conditions explicitly. `UNKNOWN` bands exist; do not equate unmodeled or below-reference areas with verified safety.
+- [~] Enforce documented solver and renderer budgets. Existing solver performance tests cover the prior baseline; new cloud/exposure work and browser FPS require remeasurement.
 
-- [x] Add cached Open-Meteo/NOAA weather normalization based on incident time.
-- [x] Add cached NOAA alert normalization with a required User-Agent.
-- [x] Add cached Open-Meteo air-quality and elevation services.
-- [x] Add a backend live-context endpoint with provider-level LIVE/CACHED/DEMO provenance and safe fallback.
-- [x] Integrate Overpass nearby features and optional OSRM routes into the live-context orchestration.
-- [x] Include precipitation rate, probability, and type in weather contracts and apply bounded wet scavenging to concentration predictions.
-- [x] Add cached Overpass context lookup for hydrants, fountains, schools, roads, and HVAC features.
-- [x] Add cached OSRM routing with straight-line fallback.
-- [ ] Add browser geolocation with explicit permission-denied and unavailable states.
-- [ ] Add an explosion animation at the incident source whenever the scenario enters an exploded state.
-- [x] Query individual nearby building footprints and property shapes for evacuation prioritization.
-- [x] Cache Overpass building geometry for 24 hours and reuse it before making another provider request.
-- [~] Make 3D mode show reliable terrain/topography instead of only changing zoom.
-- [~] Make AI dispatch voice-first by default with live browser transcript streaming and a bottom-right text bubble fallback.
-- [ ] Default the map to satellite imagery and tune the command-center overlay toward the supplied dark tactical reference.
-- [ ] Keep the map within the root viewport height rather than allowing an oversized canvas.
-- [ ] In 2D, color simulated houses/buildings from green to red by impact severity with a visible legend.
-- [x] Label every external result as `LIVE`, `CACHED`, or `DEMO`.
-- [x] Add retry, timeout, and stale-cache behavior for non-rate-limited APIs.
-- [x] Apply freshness windows to all live-context providers so repeated requests reuse cached responses.
-- [x] Add a persistent Google Photorealistic session/quota guard with an `OPEN_3D` fallback.
+## 4. Context and external data services
 
-## 5. 3D map and rendering — parallel core work
+- [x] Normalize/cache Open-Meteo weather and NOAA fallback forecasts with timestamps and five-minute interpolation. Evidence: context, live-transport and weather-orchestration tests; interpolation is not five-minute observed wind.
+- [x] Normalize NOAA alerts with User-Agent, Open-Meteo air quality and elevation. Evidence: context service/mocked tests.
+- [x] Orchestrate live/cached/DEMO provider context with safe fallback and provenance fields. Evidence: context/API tests.
+- [x] Query/normalize Overpass micro-features and building footprints; integrate optional OSRM routes with straight-line fallback. Evidence: context service/tests; no guaranteed building/HVAC coverage or safe route claim.
+- [x] Apply precipitation contracts and bounded wet-scavenging heuristics. Evidence: rain/snow and contract tests.
+- [x] Reuse provider freshness windows, including the 24-hour Overpass building cache, before requesting again. Evidence: cache service and mocked fresh/stale-cache tests.
+- [~] Add browser retry/timeout/stale-cache behavior for all relevant services. Backend timeout/cache fallback exists; uniform frontend retry/backoff is not implemented.
+- [~] Display provenance/age consistently for every external result; backend fields exist, complete UI coverage needs verification.
+- [ ] Add browser geolocation with permission-denied/unavailable states and reviewed indoor/outdoor context; do not claim automatic indoor detection.
+- [ ] Add a verified source explosion animation; changed release state or geometry is not itself an animation.
+- [~] Show reliable terrain with useful zoom gating; online DEM configuration exists, disable/re-enable/failure behavior still needs verification.
+- [!] Provide satellite imagery through a configured, attributed provider. Current no-key UI reports `SAT N/A`; street tiles are not satellite imagery.
+- [~] Preserve viewport layout and responsive tactical overlays under actual browser resizing.
+- [~] Color actual returned building footprints by modeled concentration; implementation exists, current geometry/exposure integration requires browser acceptance.
+- [~] Show the seeded Princeton Middle School source pin and clear-snap interaction; code exists, verify against source edits/reset.
+- [x] Extract active frontend application JavaScript into [main.js](./frontend/src/main.js).
+- [x] Implement persistent Google session admission/quota guard with `OPEN_3D` response fallback. Evidence: map-guard tests. This is not proof of a browser renderer switch or a hard provider billing cap.
 
-- [~] Render the venue and plume in a Cesium-based 3D scene; the current rebuild uses a local safe scene first.
-- [x] Render plume field and volume cells with restrained threshold colors; avoid particle-count UI in the judge view.
-- [ ] Support map rotation/zoom controls and a 2D/3D toggle with 2D as the default.
-- [ ] Add editable incident source, unit markers, isolation rings, and route lines.
-- [ ] Add local/open terrain and building fixtures as the no-key renderer path.
-- [ ] Add MapLibre fallback mode with terrain and a custom 3D plume layer.
-- [x] Add optional photorealistic tiles behind an application quota/session guard.
-- [ ] Preserve visible attribution for every selected map, terrain, and imagery source.
-- [ ] Handle map/provider failure by switching to the local open scene before making paid requests.
+## 5. Map and rendering
 
-## 6. Command-center dashboard — Hours 15–18
+- [~] Render the venue/plume using the active MapLibre/Three.js scene. Current cloud renderer is under revision and needs final visual validation.
+- [ ] Integrate a working optional Cesium scene if still desired; installed Cesium assets are not an active renderer.
+- [~] Render threshold-colored plume geometry without particle-count judge UI. Do not claim volume-cell rendering or AEGL shells from API payloads alone.
+- [~] Verify map rotation/zoom and 2D/3D toggle; the inspected default is pitched 3D, not the outline's requested default 2D.
+- [~] Implement editable incident source/manual scenario controls; coordinator is working on UI/API coupling. A generic map marker alone is not a source edit.
+- [ ] Add real unit markers, isolation rings and route overlays backed by scenario state.
+- [ ] Package local terrain/building assets and implement a tested map-provider failure fallback. A caught style-fetch error/toast is not an offline renderer.
+- [ ] Integrate optional Google Photorealistic tiles through the session guard and verify credits and denied-session fallback. Backend guard alone is incomplete.
+- [~] Verify attribution for every map, DEM and imagery provider. MapLibre attribution control exists; complete source-credit coverage is not established.
 
-- [x] Display incident hazard, concentration, wind, and release metrics.
-- [x] Add the `T+0` to `T+120` timeline scrubber.
-- [x] Add text dispatch input and scenario/frame updates.
-- [ ] Add manual hazard, release, weather, and source-location controls.
-- [ ] Add unit roster, active commands, and command history.
-- [ ] Add action-plan, model-assumptions, provenance, and fallback-state panels.
-- [x] Add loading, provider-error, stale-cache, and backend-offline UI states.
-- [ ] Add responsive layout for field updates while preserving the 1080p command-center view.
+## 6. Command-center dashboard and exports
 
-## Backend-first delivery gate
+- [~] Display incident/hazard/release/weather metrics, provider errors and honest unavailable-data states in the active dashboard; final browser checks pending.
+- [~] Verify text dispatch updates scenario/frame while preserving the scenario during scrubbing, weather refresh and playback.
+- [~] Complete manual hazard/release/weather/location controls, including leak, burst and combined modes with rate, duration, burst mass and burst time. Coordinator implementation is active; backend contract integration and browser validation remain pending.
+- [~] Complete seeded prompts, baseline reset, command history and action-plan/assumption/provenance panels; coordinator owns current work.
+- [ ] Implement a real active-unit roster/resource model; a deployment acknowledgement or incident-label change is not unit tracking.
+- [~] Export all returned modeled building records as escaped CSV; coordinator implementation is active. Verify complete row coverage, quoting/escaping, units/provenance and browser download after backend contract integration. Returned records are not a complete building inventory.
+- [~] Export PNG/JPG map captures retaining attribution and a simulation disclaimer; coordinator implementation is active. Verify actual downloads, rendered content and credits/disclaimer in both formats before completion.
+- [~] Add WebM video capture of the simulation; coordinator frontend implementation is active. Browser recording, stop/download behavior, attribution/disclaimer retention and unsupported-capture handling remain unverified.
+- [ ] Verify WebM recordings contain the intended rendered frames, open successfully after download and release recording resources when stopped; no end-to-end recording claim yet.
+- [ ] Add/verify a simulated hazard-perimeter GeoJSON export through the active UI; CSV/image/video exports do not satisfy this separate requirement. It must not be labeled an approved evacuation boundary.
+- [ ] Validate phone-sized field layouts while preserving the 1080p dashboard.
 
-- [x] Complete backend cache, map-guard, physics, and API validation before rebuilding the frontend.
-- [x] Rebuild the frontend only against verified backend contracts; no renderer may issue uncontrolled 3D requests.
-- [x] Write the judge-ready implementation plan, performance budgets, request budget, failure drills, and rehearsal runbook.
-- [x] Finish the API call budget, cache-tier policy, cost stops, and 150-second judge rehearsal script.
-- [x] Close the next P0 gaps: preserve post-dispatch scenario during timeline scrubbing, add seeded prompts/reset/history, and render the complete action plan.
-- [x] Add focused frontend tests and complete offline/provider-failure rehearsal.
-- [x] Reduce duplicate bootstrap/map requests and expand browser/backend cache reuse.
+## 7. Tests, hardening and delivery gates
 
-## 7. Tests, hardening, and demo reliability — Hours 18–21
+- [x] Maintain focused backend tests for direction/stability, fallback/cache, voice failures, core API/manual updates, provider normalization and baseline performance. See evidence links above.
+- [~] Cover every hazard/command path and every documented endpoint/failure response. Existing tests are representative; exhaustive coverage and new exposure endpoints need final evidence.
+- [x] Keep Gemini/ElevenLabs provider tests mocked and verify cache/fallback behavior without paid calls.
+- [x] Maintain dispatch/timeline/formatting helper tests; prior 15-test frontend baseline is recorded, not full browser coverage.
+- [~] Rerun backend/frontend suites and production build/type-check after all active changes; validate the actual shipped JavaScript, not only typed helper modules.
+- [~] Measure current frame/exposure generation, geometry caps, response size, browser FPS and request fan-out.
+- [ ] Verify the complete browser flow without API keys and with each provider independently unavailable, including map style/tiles/DEM and audio.
+- [ ] Verify no stale playback/dispatch/weather result overwrites a newer manual edit/reset.
+- [x] Write implementation-plan, request-budget, failure-drill and rehearsal documents. These documents exist; their prescribed gates are not marked executed.
+- [ ] Verify startup/recovery on the presentation laptop and capture reproducible smoke/rehearsal evidence.
 
-- [x] Test plume direction and stability behavior.
-- [x] Test deterministic agent fallback and cache behavior without Gemini calls.
-- [x] Test voice fallback without ElevenLabs calls.
-- [x] Test health, scenario, plume, validation, and manual-update endpoints.
-- [x] Add unit tests for every hazard profile and command application path.
-- [x] Add API contract tests for every documented endpoint and failure response.
-- [x] Add external-service tests using mocks, fixtures, expected results, and cache hits only.
-- [x] Add plume performance and primitive-budget tests.
-- [x] Add frontend build/type-check validation and smoke-test the demo flow.
-- [ ] Add performance checks for frame generation and render primitive limits.
-- [ ] Verify the app runs with no API keys and with each provider independently unavailable.
+## 8. Demo preparation and freeze
 
-## 8. Demo preparation and rehearsal — Hours 21–24
+- [ ] Prepare historical disaster dossier cards, venue hot-file and alarm media.
+- [~] Seed a deterministic incident for the judge flow: backend defaults exist; end-to-end reset/seed controls are being integrated.
+- [x] Write a proposed 150-second walkthrough, prompts and fallback script: [rehearsal script](./docs/DEMO_REHEARSAL_SCRIPT.md). Verify prompts against current single-command behavior before use.
+- [ ] Rehearse hook, walkthrough, ambush, dispatch, plume and action plan three times, including failure/recovery.
+- [ ] Verify cached audio/local map assets on the presentation laptop; do not assume either exists from earlier status entries.
+- [ ] Freeze/copy/tag a known-good build and record the startup/recovery steps actually exercised.
 
-- [ ] Prepare historical disaster dossier cards.
-- [ ] Prepare the venue incident hot-file and alarm ambush media.
-- [ ] Seed a deterministic baseline incident for the 2.5-minute judge flow.
-- [ ] Write the spoken walkthrough, interactive judge prompts, and fallback script.
-- [ ] Rehearse the complete flow: hook, walkthrough, ambush, dispatch, plume, and action plan.
-- [ ] Verify cached audio and local map assets on the presentation laptop.
-- [ ] Freeze a known-good demo build and record startup/recovery steps.
+## Advanced extension backlog
 
-## Stretch goals (only after the core demo is reliable)
+### Priority 1 — visualization and exposure
 
-- [ ] Add mobile field view/PWA layout.
-- [ ] Add role-based live synchronization for commander, AI agent, field units, and evacuation lead.
-- [ ] Add multi-user incident sessions.
-- [ ] Add richer unit routing and localized responder advice.
+- [ ] Add a working altitude-slice control for ground/roof/high views. No active altitude UI is evidenced.
+- [~] Add map-space animated wind streamlines and building severity overlays; current rendering/browser verification pending.
+- [ ] Add scientifically appropriate, labeled concentration iso-surfaces. Existing TRACE/PEL/IDLH bands and visual cloud shells are not AEGL-1/2/3 contours.
+- [~] Add bounded two-hour **outdoor concentration-time exposure**, not cumulative personal toxic dose. Unit occupancy/PPE/breathing and hazard-specific toxicology are not modeled.
+- [ ] Add/verify simulated perimeter GeoJSON export with honest metadata and a browser download check; current CSV/image work is separate.
+- [ ] Add a working FLIR/thermal display toggle. No active toggle is evidenced; visual coloring is not a thermal measurement.
 
-## Advanced extensions — prioritized by judge impact
+### Priority 2 — multimodal and field view
 
-These are intentionally ordered by the strongest combination of visible demo impact, technical depth, and implementation value. Complete the highest priority tier before starting lower tiers.
+- [ ] Add a placard image scanner, reviewed hazard auto-population and explicit provider/confidence/validation display.
+- [ ] Add approximate drone-image smoke analysis with a deterministic fallback.
+- [ ] Add responder QR onboarding and a phone-sized field view with explicit location/provenance limitations.
 
-### Priority 1 — visible command-center differentiators
+### Priority 3 — presentation and chemical fate
 
-- [x] **Implement volumetric altitude slicing.** Add a `Z`-axis control with ground-level (`z=2m`), roof-height (`z=25m`), and high-atmosphere views so judges can inspect concentration by altitude.
-- [x] **Add animated 3D wind streamlines.** Render bounded vector flowlines that show wind transport and building/terrain deflection around the plume.
-- [x] **Highlight affected buildings by severity.** Render deterministic venue building fixtures from green through yellow to red based on nearby plume concentration.
-- [x] **Add dynamic plume iso-surface boundaries.** Render concentration shells for AEGL-1, AEGL-2, and AEGL-3 with clear threshold labels and simulation disclaimers.
-- [x] **Add cumulative toxic-dose metrics.** Calculate `Dose = integral(C(t)^n dt)` for active units and expose the result in the unit/action-plan view.
-- [x] **Add evacuation-boundary GeoJSON export.** Provide a one-click export of the current simulated hazard perimeter for EOC/GIS workflows.
-- [x] **Add a FLIR/thermal tactical view.** Provide a one-click LUT toggle for Cesium/MapLibre plume visualization.
+- [ ] Add optional EOC audio effects/radio filtering with a complete silent fallback.
+- [ ] Add a safe physical dispatch shortcut and verify it with actual hardware.
+- [ ] Add illustrative secondary reaction/sensory-radius indicators without invented safety limits.
+- [~] Research surface persistence beyond existing prototype retention fields; validated surface loading, resuspension and decontamination mapping remain incomplete.
 
-### Priority 2 — high-impact interactive judge features
+### Priority 4 — collaboration/stretch
 
-- [ ] **Add a HAZMAT placard photo scanner.** Accept a drag-and-drop or camera image and use Gemini Vision to identify a UN placard such as `UN 1017`.
-- [ ] **Auto-populate identified hazard properties.** Fill chemical identity, density, toxicity thresholds, reactivity, and a conservative default leak rate from a reviewed local library; never treat model output as the source of truth.
-- [ ] **Display vision confidence and reasoning trace.** Show provider, confidence, extracted placard fields, and validation warnings before applying a hazard change.
-- [ ] **Add drone recon smoke analysis.** Accept an overhead image and return an explicitly approximate plume vector and buoyancy classification with a deterministic fallback.
-- [ ] **Generate a dynamic responder QR code.** Open a no-registration mobile field view with the simulated location and indoor/outdoor safety guidance.
-- [ ] **Add a compact field responder view.** Show local plume band, nearest context features, unit advice, and stale/demo provenance on a phone-sized layout.
+- [ ] Add mobile/PWA support, role-specific views, multi-user incident synchronization and richer responder routing only after the single-user core is reliable.
+- [ ] Implement a custom advection-diffusion physics shader only if scientifically justified; current Three.js visualization is not that solver.
 
-### Priority 3 — immersion and presentation polish
+## Real-world validation blockers — prototype only
 
-- [ ] **Add EOC audio effects.** Mix dispatcher chimes, radio chatter, and tactical static around cached ElevenLabs output without making audio generation required.
-- [ ] **Add radio playback filtering.** Apply optional band-pass/static effects in the browser and preserve a clean text-only fallback.
-- [ ] **Add a physical Execute Dispatch switch.** Map a safe keyboard shortcut or optional macro-pad/arcade button to trigger the seeded emergency scenario.
-- [ ] **Add secondary chemical reaction indicators.** Model clearly labeled illustrative effects such as chlorine humidity mist or secondary-fire updrafts.
-- [ ] **Research and model chemical surface persistence.** Track candidate contaminated surfaces separately from airborne plume concentration and show sanitation/decontamination areas for hazards with deposition or adsorption traits.
-- [ ] **Add a sensory-impact radius.** Display conservative eye/respiratory irritation perimeter warnings separately from regulatory plume bands.
+- [ ] Benchmark dispersion and uncertainty against reference datasets and field observations; calibrate source terms, meteorology, terrain/building interactions and deposition.
+- [ ] Validate hazard-specific units, thresholds, mixtures, toxicology, radiation/infection models and exposure interpretation with qualified specialists.
+- [ ] Integrate actual population/occupancy and field measurements; absence of a returned building or concentration is not evidence of safety.
+- [ ] Validate indoor infiltration, personal dose/PPE, resource state and safe routes before making corresponding operational claims.
+- [ ] Obtain qualified emergency-response review before independent evacuation, PPE, shelter or decontamination use. Current action plans and boundaries are simulation outputs, not authority.
 
-### Priority 4 — collaboration stretch features
+## Update protocol and audit log
 
-- [ ] **Add role-based field collaboration.** Support commander, AI operations agent, field unit, and evacuation lead views.
-- [ ] **Add multi-user incident synchronization.** Add real-time shared state only after the offline single-user demo is reliable.
+1. Promote an item only after implementation and focused validation at its stated scope; record a test/run/browser result, not just code existence.
+2. Keep active cloud, exposure and coordinator UI/export work partial until final integration results arrive.
+3. Keep [gantt.md](./gantt.md) synchronized. Do not reintroduce percentages without a defined denominator and evidence for every counted completion.
+4. Keep paid-provider tests mocked; distinguish historical tests, new tests and live smoke evidence.
 
-### Advanced phase mapping
-
-- **Phase 9 — AI vision and multimodal intake:** placard upload, reviewed hazard auto-population, confidence/reasoning display, and drone recon analysis.
-- **Phase 10 — Interactive EOC tools and graphics:** altitude slice, FLIR mode, wind flowlines, iso-surfaces, cumulative dose, sensory radius, and GeoJSON export.
-- **Phase 11 — Field collaboration and QR onboarding:** responder QR code, mobile field view, audio effects/filtering, and optional multi-user collaboration.
-
-## Update protocol
-
-1. Check an item only after its implementation and focused validation are complete.
-2. Mark an item `[~]` while it is actively being built; include the blocking detail below if needed.
-3. Update the percentage and counts at the top after changing statuses.
-4. Update [`gantt.md`](./gantt.md) in the same change so the checklist and schedule stay aligned.
-5. Keep provider calls out of tests; use mocks, fixtures, expected results, or cache files for Gemini and ElevenLabs.
-
-### Current blockers and decisions
-
-- The outline names Mapbox in the original architecture, while the current implementation uses Cesium with an open-scene fallback. Keep the renderer provider-neutral before adding another renderer.
-- External weather, context, routing, and elevation services are not implemented yet; local fixtures should land before live integrations.
+**2026-10-11 audit:** removed unsupported 84%/67-item totals and obsolete completion history; corrected active renderer/framework; downgraded offline reliability, React/Cesium/Google rendering, voice/audio, altitude/FLIR/AEGL/dose/export and broad validation claims. External services are implemented at backend scope; the old statement that they did not exist was also removed. Current implementation work remains pending rather than being credited prospectively.

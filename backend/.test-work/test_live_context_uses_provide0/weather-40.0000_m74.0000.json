@@ -1,0 +1,10 @@
+{
+  "current": {
+    "precipitation": 1.5,
+    "rain": 1.5,
+    "temperature_2m": 20,
+    "time": "2026-10-10T12:00",
+    "wind_direction_10m": 180,
+    "wind_speed_10m": 5
+  }
+}

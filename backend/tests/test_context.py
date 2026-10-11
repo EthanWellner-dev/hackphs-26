@@ -81,7 +81,7 @@ def test_open_meteo_normalization_falls_back_to_hourly() -> None:
 
 
 def test_weather_timeline_interpolates_every_five_minutes() -> None:
-    samples = normalize_weather_timeline({"hourly": {"wind_speed_10m": [4.0, 8.0, 8.0], "wind_direction_10m": [350, 10, 10], "temperature_2m": [10.0, 20.0, 20.0]}, "hourly_units": {"wind_speed_10m": "m/s"}}, source="LIVE")
+    samples = normalize_weather_timeline({"current": {"time": "2026-10-11T06:00"}, "hourly": {"time": ["2026-10-11T06:00", "2026-10-11T07:00", "2026-10-11T08:00"], "wind_speed_10m": [4.0, 8.0, 8.0], "wind_direction_10m": [350, 10, 10], "temperature_2m": [10.0, 20.0, 20.0]}, "hourly_units": {"wind_speed_10m": "m/s"}}, source="LIVE")
     assert len(samples) == 25
     assert samples[1].minutesFromNow == 5
     assert samples[1].windSpeedMetersPerSecond == 4.333333333333333
@@ -253,7 +253,8 @@ def test_live_context_uses_provider_headers_and_demo_fallback(monkeypatch, tmp_p
     monkeypatch.setenv("DEMO_ROUTE_DESTINATION_LONGITUDE", "-74.01")
     client = FakeClient()
     context = get_live_context(40.0, -74.0, client=client)
-    assert context.provenance["weather"] == "LIVE"
+    assert context.provenance["weather"] == "CACHED"
+    assert context.weather.stale is True
     assert context.weather.precipitationMillimetersPerHour == 1.5
     assert context.airQuality is not None and context.airQuality.pm25MicrogramsPerCubicMeter == 8.0
     assert context.elevation is not None and context.elevation.elevationMeters == 42.0

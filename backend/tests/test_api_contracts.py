@@ -45,7 +45,8 @@ def test_map_session_falls_back_without_a_key(monkeypatch) -> None:
     asyncio.run(exercise())
 
 
-def test_scenario_and_plume_contracts_clamp_time_and_preserve_version() -> None:
+def test_scenario_and_plume_contracts_clamp_time_and_preserve_version(monkeypatch) -> None:
+    monkeypatch.setattr("app.main.get_live_context", demo_context)
     async def exercise() -> None:
         scenario_response = await request("get", "/api/scenario")
         assert scenario_response.status_code == 200
@@ -56,8 +57,10 @@ def test_scenario_and_plume_contracts_clamp_time_and_preserve_version() -> None:
         assert plume_response.status_code == 200
         plume = plume_response.json()
         assert plume["timeMinutes"] == 0
-        assert len(plume["particles"]) == 18
-        assert len(plume["volumeCells"]) == 10
+        assert len(plume["particles"]) == 5
+        assert plume["maxConcentration"] == 0
+        assert plume["populationAtRisk"] is None
+        assert len(plume["volumeCells"]) == 0
         assert plume["isApproximation"] is True
         assert plume["assumptions"]
 
@@ -135,7 +138,7 @@ def test_dispatch_contract_rejects_invalid_payloads_and_returns_audio_shape(monk
         assert body["actionPlan"]["scenarioId"] == body["scenario"]["scenarioId"]
         assert body["actionPlan"]["disclaimer"].startswith("SIMULATION ONLY")
         assert body["actionPlan"]["assumptions"]
-        assert body["frame"]["assumptions"] == ["Real-time plume projection from wind, release, terrain, and hazard inputs."]
+        assert any("not validated" in assumption for assumption in body["frame"]["assumptions"])
 
     asyncio.run(exercise())
 

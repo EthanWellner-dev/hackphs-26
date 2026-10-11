@@ -112,7 +112,9 @@ def test_structured_llm_explosion_command_updates_scenario_live(monkeypatch) -> 
         assert body["provider"] == "GEMINI:test-model"
         assert body["commands"] == [{"commandType": "TRIGGER_EVENT", "value": "EXPLOSION"}]
         assert body["scenario"]["release"]["hasExploded"] is True
-        assert body["scenario"]["release"]["rateKgPerSecond"] == 20.25
+        assert body["scenario"]["release"]["rateKgPerSecond"] == Scenario().release.rateKgPerSecond
+        assert body["scenario"]["release"]["impulseMassKg"] == 0
+        assert body["clarifyingQuestions"]
         assert body["scenario"]["version"] == 2
         assert body["frame"]["scenarioVersion"] == 2
         assert body["actionPlan"]["hazardSeverity"] == "CRITICAL"

@@ -6,9 +6,7 @@
     <title>Real 3D Global Map Engine with Elevation Terrain</title>
     <!-- Tailwind CSS for modern UI styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- MapLibre GL JS CSS and Library -->
-    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
-    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <!-- MapLibre and its CSS are bundled with the application. -->
     <!-- Google Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -68,7 +66,20 @@
         .brand span { color: #c9d1d3; font-size: 16px; font-weight: 300; }
         .brand .divider { color: #788287; font-size: 20px; }
         .header-note { color: #aab4b7; font-size: 16px; }
-        .panel {
+        .top-nav { display: flex; align-items: center; gap: 8px; }
+        .top-nav button { color: #edf4f5; background: transparent; border: 1px solid transparent; padding: 5px 8px; cursor: pointer; font: inherit; }
+        .top-nav button[aria-selected="true"] { border-color: var(--cyan); color: var(--cyan); }
+        .research-view { position: absolute; inset: 50px 0 0; z-index: 20; overflow-y: auto; padding: 24px 32px 48px; color: #000; background: #fff; pointer-events: auto; }
+        .research-view[hidden] { display: none; }
+        .research-view article { max-width: 900px; margin: 0 auto; }
+        .research-view figure { margin: 24px 0; }
+        .research-view img { display: block; max-width: 100%; height: auto; }
+        .research-view figcaption { font-size: 16px; line-height: 1.55; margin-top: 8px; }
+        .research-view h1, .research-view h2, .research-view p, .research-view li { font-size: 16px; line-height: 1.55; }
+        .research-view h1, .research-view h2 { font-weight: 700; }
+        .research-view h2 { margin-top: 28px; }
+        .research-view a { color: #000; }
+        .panel { 
             background: linear-gradient(135deg, rgba(17, 25, 29, .96), rgba(8, 14, 18, .93));
             border: 1px solid var(--line);
             border-radius: 6px;
@@ -88,14 +99,22 @@
         .panel-subtitle { color: var(--muted); font-size: 12px; }
         .left-rail, .right-rail { position: absolute; top: 59px; bottom: 13px; width: 282px; pointer-events: auto; }
         .left-rail { left: 12px; }
-        .right-rail { right: 12px; width: 158px; }
+        .right-rail { right: 12px; width: 238px; }
+        .left-rail { overflow-y: auto; padding-bottom: 20px; }
+        .release-controls { margin-top: 10px; border-top: 1px solid #344650; padding-top: 8px; }
+        .release-controls summary { cursor: pointer; font-size: 12px; color: #b9e7f6; }
+        .release-controls label { display: grid; gap: 4px; margin-top: 8px; font-size: 11px; color: #b8c8cf; }
+        .release-controls input, .release-controls select { min-width: 0; width: 100%; padding: 7px; color: #ecf6fa; background: #14252e; border: 1px solid #50636d; border-radius: 4px; pointer-events: auto; }
+        .release-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .forecast-controls[hidden] { display: none; }
+        button:disabled { opacity: .45; cursor: wait; }
         .dispatch { padding: 10px; }
         .dispatch-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
         .online { color: #a9b1b2; font-size: 11px; }
         .voice-row { display: flex; align-items: center; gap: 9px; color: #e5ecec; font-size: 12px; }
         .voice-orb { width: 31px; height: 31px; display: grid; place-items: center; border-radius: 50%; color: #e9f8ff; background: radial-gradient(circle at 35% 28%, #8bdcff 0%, #328fd0 42%, #09519d 100%); border: 1px solid #8bdcff; box-shadow: 0 0 12px rgba(50, 143, 208, .65); font-weight: 700; }
         .waveform { flex: 1; height: 24px; opacity: .82; background: repeating-linear-gradient(90deg, transparent 0 3px, #a9c0c7 3px 5px, transparent 5px 9px); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
-        .ai-dispatch-orb { position: absolute; left: 50%; bottom: 54px; z-index: 2; width: 84px; height: 84px; display: grid; place-items: center; transform: translateX(-50%); color: #e9f8ff; background: radial-gradient(circle at 34% 24%, #9ae5ff 0%, #368fd9 35%, #0751a3 72%, #062866 100%); border: 1px solid #77caff; border-radius: 50%; box-shadow: 0 0 0 5px rgba(56, 149, 226, .12), 0 0 24px rgba(42, 145, 239, .72), inset 8px 8px 18px rgba(255,255,255,.2), inset -8px -10px 18px rgba(0, 13, 70, .48); cursor: pointer; font-size: 22px; font-weight: 700; letter-spacing: .02em; transition: transform .2s ease, filter .2s ease; pointer-events: auto; }
+        .ai-dispatch-orb { position: absolute; left: 50%; bottom: 24px; z-index: 2; width: 59px; height: 59px; display: grid; place-items: center; transform: translateX(-50%); color: #e9f8ff; background: radial-gradient(circle at 34% 24%, #9ae5ff 0%, #368fd9 35%, #0751a3 72%, #062866 100%); border: 1px solid #77caff; border-radius: 50%; box-shadow: 0 0 0 5px rgba(56, 149, 226, .12), 0 0 24px rgba(42, 145, 239, .72), inset 8px 8px 18px rgba(255,255,255,.2), inset -8px -10px 18px rgba(0, 13, 70, .48); cursor: pointer; font-size: 22px; font-weight: 700; letter-spacing: .02em; transition: transform .2s ease, filter .2s ease; pointer-events: auto; }
         .ai-dispatch-orb::before { content: ''; position: absolute; inset: -7px; border: 1px solid rgba(112, 201, 232, .38); border-radius: 50%; }
         .ai-dispatch-orb:hover { filter: brightness(1.15); transform: translateX(-50%) scale(1.04); }
         .ai-dispatch-orb span { text-shadow: 0 1px 5px #062866; }
@@ -125,20 +144,46 @@
         .action-list button { padding: 0; text-align: left; color: inherit; background: transparent; border: 0; cursor: pointer; font: inherit; }
         .right-card { padding: 10px; margin-bottom: 7px; }
         .timeline-card { min-height: 162px; }
-        .scrubber { height: 5px; margin: 16px 6px 9px; position: relative; background: #39464b; border-radius: 10px; }
-        .scrubber::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 62%; background: #65b8e4; border-radius: inherit; }
-        .scrubber::after { content: ''; position: absolute; left: 62%; top: 50%; width: 13px; height: 13px; transform: translate(-50%, -50%); border-radius: 50%; background: #69bde8; border: 2px solid #dcecf1; }
+        .forecast-controls { display: flex; gap: 5px; margin: 8px 0; }
+        .forecast-controls button { flex: 1; padding: 7px 4px; color: #d1ecf5; border: 1px solid #54747f; border-radius: 4px; background: #172b36; cursor: pointer; font-size: 10px; }
+        .forecast-controls button[aria-pressed="true"] { background: #286e88; border-color: #8bdcff; color: white; }
+        .right-rail { max-height: calc(100vh - 90px); overflow-y: auto; }
+        #affected-list[hidden] { display: none; }
+        .exposure-popup { color: #122532; font: 12px/1.5 sans-serif; max-width: 260px; }
+        .exposure-popup strong { display: block; }
+        .exposure-popup small { display: block; margin-top: 6px; }
+        .scrubber { width: 100%; height: 22px; margin: 12px 0 8px; accent-color: #65b8e4; cursor: ew-resize; }
+        .scrubber::-webkit-slider-runnable-track { height: 5px; background: #39464b; border-radius: 10px; }
+        .scrubber::-webkit-slider-thumb { margin-top: -4px; width: 13px; height: 13px; appearance: none; border-radius: 50%; background: #69bde8; border: 2px solid #dcecf1; }
+        .scrubber::-moz-range-track { height: 5px; background: #39464b; border-radius: 10px; }
+        .scrubber::-moz-range-thumb { width: 13px; height: 13px; border-radius: 50%; background: #69bde8; border: 2px solid #dcecf1; }
         .timeline-labels { display: grid; gap: 7px; color: #bdc6c8; font-size: 12px; }
         .context-lines { display: grid; gap: 9px; margin-top: 10px; color: #bec8ca; font-size: 12px; line-height: 1.2; }
         .context-lines strong { display: block; color: #f0f5f5; font-size: 12px; font-weight: 500; }
-        .log-card { min-height: 187px; }
-        .log-lines { display: grid; gap: 7px; margin-top: 10px; color: #b5c0c2; font-size: 11px; line-height: 1.25; }
-        .log-lines span { color: #e2eaeb; }
+        .affected-card { min-height: 187px; }
+        .affected-list { display: grid; gap: 7px; margin-top: 10px; color: #b5c0c2; font-size: 11px; line-height: 1.25; }
+        .affected-list span { color: #e2eaeb; }
+        .affected-toggle { color: #8bdcff; background: transparent; border: 0; cursor: pointer; font: inherit; font-size: 11px; }
+        .affected-toggle[aria-expanded="false"] + .affected-list { display: none; }
+        .dispatch-input { position: absolute; left: 50%; bottom: 150px; z-index: 4; width: min(310px, calc(100vw - 28px)); padding: 10px 12px; color: #eaf2f3; background: rgba(10, 20, 26, .96); border: 1px solid #54747f; border-radius: 5px; outline: 0; font: inherit; font-size: 11px; box-shadow: 0 10px 28px rgba(0,0,0,.45); transform: translateX(-50%); }
+        .dispatch-examples { position: absolute; left: 50%; bottom: 205px; transform: translateX(-50%); width: 310px; padding: 12px; background: #10222ef5; border: 1px solid #54747f; border-radius: 6px; pointer-events: auto; font-size: 11px; max-height: 260px; overflow: auto; }
+        .dispatch-examples button { display: block; width: 100%; text-align: left; color: #b9e7ff; background: #193746; border: 0; border-radius: 3px; padding: 6px; margin-top: 5px; }
+        .dispatch-examples small { display: block; margin-top: 8px; color: #9fb3c0; }
+        #dispatch-response { margin-top: 8px; color: #f0f6fa; }
+        .dispatch-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(112, 201, 232, .12), 0 10px 28px rgba(0,0,0,.45); }
+        .dispatch-chat-toggle { position: absolute; left: calc(50% - 48px); bottom: 21px; z-index: 5; width: 25px; height: 25px; display: grid; place-items: center; padding: 0; color: #08234e; background: #b9edff; border: 2px solid #e9fbff; border-radius: 50%; box-shadow: 0 2px 9px rgba(0,0,0,.48), 0 0 10px rgba(112,201,232,.9); cursor: pointer; font-size: 13px; line-height: 1; pointer-events: auto; }
+        .dispatch-chat-toggle:hover { background: #fff; transform: scale(1.08); }
+        .responding-unit { padding: 4px 7px; background: #164761; border: 2px solid #8adaff; border-radius: 5px; color: white; font: 600 11px sans-serif; box-shadow: 0 2px 6px #0009; }
+        .ai-dispatch-orb[aria-pressed="true"] { outline: 3px solid #a5efff; filter: brightness(1.25); }
+        .source-marker { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: radial-gradient(circle, #ff8177 0 24%, #c9363e 26% 58%, #671821 60%); border: 2px solid #ffd0ca; box-shadow: 0 0 0 5px rgba(226, 88, 77, .22), 0 0 18px rgba(226, 88, 77, .8); font-size: 12px; }
+        #wind-arrow { display: inline-block; margin-left: 7px; font-size: 19px; color: #c7f1ff; transform-origin: center; }
+        .model-note { margin-top: 7px; color: #9eb4bf; font-size: 10px; line-height: 1.4; }
         .map-tools { position: absolute; top: 65px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px; pointer-events: auto; }
         .map-tools button, .landmark-btn { color: #e7f1f2; background: rgba(12, 20, 24, .9); border: 1px solid #56666b; border-radius: 4px; cursor: pointer; font: inherit; font-size: 11px; }
         .map-tools button { padding: 7px 10px; }
         .map-tools button:first-child { color: #e5f7ff; border-color: #70c9e8; }
-        .map-badge { position: absolute; right: 178px; bottom: 17px; padding: 7px 10px; color: #bfcacc; background: rgba(9,15,19,.88); border: 1px solid #55656a; border-radius: 4px; font-size: 11px; pointer-events: auto; }
+        .map-tools button[aria-pressed="true"] { color: #071118; background: #70c9e8; border-color: #b4edff; }
+        .map-badge { position: absolute; right: 264px; bottom: 22px; padding: 7px 10px; color: #bfcacc; background: rgba(9,15,19,.88); border: 1px solid #55656a; border-radius: 4px; font-size: 11px; pointer-events: auto; }
         .bottom-status { position: absolute; left: 12px; right: 12px; bottom: 2px; display: flex; justify-content: center; color: #b8c1c3; font-size: 11px; pointer-events: none; }
         .search-results { color: #eaf2f3; background: #10191d !important; border: 1px solid #52646a !important; border-radius: 4px !important; }
         #toast { position: absolute; left: 50%; top: 54px; transform: translateX(-50%); padding: 8px 13px; color: #eaf4f5; background: rgba(8, 15, 19, .94); border: 1px solid var(--line); border-radius: 4px; font-size: 11px; pointer-events: none; }
@@ -188,13 +233,75 @@
                 <strong>AERO-HAZARD</strong><span class="divider">/</span><span>PLUME</span>
                 <span class="divider">|</span><span>3D METEOROLOGICAL TOPOGRAPHIC SIMULATOR</span>
             </div>
+            <div class="top-nav" aria-label="Primary navigation">
+                <button id="nav-map" type="button" aria-selected="true">MAP</button>
+                <button id="nav-research" type="button" aria-selected="false">RESEARCH</button>
+            </div>
             <div class="header-note">hackPHS - ‘Into the Skies’</div>
         </header>
+
+        <section id="research-view" class="research-view" hidden>
+            <article>
+                <h1>Research summary</h1>
+                <p>This page gathers the research that informs Aero-Hazard / Plume. It describes the incidents we are addressing, what controls airborne transport, how an estimated draft path is produced, how exposure limits should be read, and where a computer model must give way to field measurements and official direction. The page is intentionally text heavy so that a user can understand the assumptions behind the map before using it.</p>
+                <figure>
+                    <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Smoke%20plume%20from%20wildfire.jpg" alt="A visible smoke plume rising and moving downwind" width="640" height="360" loading="lazy">
+                    <figcaption>A visible plume is shaped by release energy, wind, buoyancy, and atmospheric mixing. Image: Wikimedia Commons.</figcaption>
+                </figure>
+
+                <h2>Incidents and response problems</h2>
+                <p>Industrial releases, transportation accidents, fires, explosions, and radiological events can put hazardous material into the air before responders know the release rate, source height, chemical behavior, or local wind. The Bhopal gas disaster, the Chernobyl fallout event, and the East Palestine train derailment are different incidents, but they expose the same operational problem: decisions must be made while observations are incomplete and weather conditions are changing.</p>
+                <p>We are addressing the delay between an incident report and a usable first estimate. The simulator combines a reported source, a hazard library, terrain, buildings, and forecast weather so an incident commander can inspect possible downwind areas, compare time steps, and communicate uncertainty. It is a planning aid, not a replacement for monitoring, protective equipment, evacuation orders, or qualified incident command.</p>
+                <p>Useful initial questions are: What was released? Is the release continuous or instantaneous? Is the material a gas, vapor, aerosol, smoke, or radioactive material? Where is the source and how high is it? What is the wind at the source? Are people indoors, outdoors, uphill, downhill, or inside a ventilation path? Which observations would most quickly confirm or reject the first estimate?</p>
+
+                <h2>Weather patterns and atmospheric stability</h2>
+                <p>Wind direction determines the initial transport direction, while wind speed determines how quickly a plume moves away from its source. Gusts and directional shifts broaden the affected area. Temperature, humidity, cloud cover, and surface heating influence turbulence. A stable atmosphere suppresses vertical mixing and can keep a plume concentrated near the release level; an unstable atmosphere produces stronger vertical mixing and generally spreads material through a deeper layer. A neutral atmosphere falls between these behaviors.</p>
+                <p>Day and night cycles matter. Sun-warmed ground commonly creates daytime convection and stronger mixing, while nighttime surface cooling can create a stable layer close to the ground. In valleys and urban areas, local circulations can differ from the regional forecast. Sea breezes, drainage winds, fronts, thunderstorms, and terrain-driven flows can change direction or speed over a short distance.</p>
+                <p>Weather observations are snapshots. Forecast models interpolate between observations and may not resolve street-level effects. Terrain, trees, buildings, valleys, and walls can redirect or channel flow. For this reason, the map should be read as a range of plausible transport paths rather than a precise boundary.</p>
+                <figure>
+                    <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Atmospheric%20boundary%20layer.svg" alt="Diagram showing the atmospheric boundary layer above the ground" width="640" height="360" loading="lazy">
+                    <figcaption>The atmospheric boundary layer is the lowest part of the atmosphere directly influenced by the surface. Its depth and turbulence change over time. Image: Wikimedia Commons.</figcaption>
+                </figure>
+
+                <h2>How draft paths work with weather patterns</h2>
+                <p>A draft path in this interface is an estimated advection path: the source location is moved through the local wind field over time. The calculation starts with wind direction and speed, then adds diffusion to represent unresolved turbulence. The result is visualized as a plume whose centerline follows the expected transport direction while its width represents mixing and uncertainty.</p>
+                <p>As the forecast timeline advances, the path can bend when the input weather changes. Terrain and building geometry can influence the displayed flow, but the simulation does not directly measure every corridor, roofline, or indoor ventilation system. A visible plume is therefore an analytical approximation of outdoor transport, not proof that a location is safe or contaminated.</p>
+                <p>The displayed path should be separated into three ideas. Advection is movement carried by the mean wind. Diffusion is the spreading caused by unresolved random motion and turbulence. Deposition or removal represents material leaving the air through settling, chemical reaction, rainout, or other processes. Different chemicals and particle sizes behave differently, so a gas model should not be interpreted as a particulate or fallout model.</p>
+
+                <h2>Source characterization and chemical behavior</h2>
+                <p>The release rate, total mass, release duration, temperature, pressure, density, buoyancy, and source height all affect the result. A short, high-mass release creates a moving puff; a continuing leak creates a plume that is replenished while the leak continues. A warm buoyant release can rise before it is carried downwind. A dense gas can remain close to the surface or collect in low areas under suitable conditions. The same weather can produce very different paths for different materials.</p>
+                <p>When the source is uncertain, it is safer to compare multiple scenarios rather than select a single precise number. Test a low, central, and high release estimate; vary wind direction and speed; and inspect whether the priority area stays the same. Stable conclusions across those scenarios are more useful than a detailed-looking single run.</p>
+
+                <h2>Safe levels and exposure language</h2>
+                <p>Safety limits depend on the substance, exposure duration, route of exposure, and the population being protected. This project distinguishes trace, permissible exposure, and immediately dangerous to life or health thresholds where those values are available in the hazard library. These labels are screening references, not universal safe or unsafe guarantees. A short-term emergency guideline is not interchangeable with an occupational limit or a public-health standard.</p>
+                <p>EPA Acute Exposure Guideline Levels use different tiers to describe effects ranging from notable discomfort to serious or irreversible effects and life-threatening effects. NIOSH IDLH values are intended to identify conditions that could threaten life or prevent escape. Occupational exposure limits are generally designed around workplace assumptions and may not represent children, older adults, pregnant people, people with asthma, or the general public. Concentration alone also does not describe dose: time, breathing rate, protective equipment, and indoor filtration matter.</p>
+                <p>For an actual release, responders should use the current Safety Data Sheet, NIOSH Pocket Guide, EPA Acute Exposure Guideline Levels, applicable occupational limits, radiation-specific guidance when relevant, and instructions from emergency management. People should follow official alerts, shelter-in-place or evacuation orders, and responder directions. Do not enter a modeled plume to validate it.</p>
+
+                <h2>Monitoring and decision support</h2>
+                <p>A model is most useful when paired with observations. Wind meters, weather stations, fixed chemical sensors, personal monitors, air samples, visible indicators, and reports from trained responders can test the assumptions. Measurements should be logged with location, time, instrument, detection limit, calibration status, units, and whether the reading is a background, screening, or confirmation measurement.</p>
+                <p>Use the model to prioritize questions and resources: where to place monitors, which roads or buildings may be downwind, which facilities need an early notification, and how a wind shift could change the plan. Re-run when the source description, wind, stability, terrain assumption, or field readings change. Preserve old runs so that responders can see what changed and why.</p>
+
+                <h2>Model limitations and responsible use</h2>
+                <p>ALOHA and similar dispersion tools document important limitations: predictions become less reliable when the release description or weather inputs are uncertain, complex terrain and buildings are difficult to resolve, and indoor exposure requires a separate ventilation model. Aero-Hazard inherits these limitations. The output is intended to support questions such as where to collect measurements, which areas may need attention first, and how a changing wind could alter priorities.</p>
+                <p>The simulation does not calculate individual dose, guarantee evacuation boundaries, predict every indoor concentration, or certify that an uncolored area is safe. It also cannot know whether a chemical has reacted, pooled, ignited, or been removed by rain unless those processes are explicitly represented. Treat missing data as uncertainty rather than as evidence of no hazard.</p>
+
+                <h2>Research references</h2>
+                <p><a href="https://response.restoration.noaa.gov/oil-and-chemical-spills/chemical-spills/response-tools/alohas-limitations.html" target="_blank" rel="noreferrer">NOAA ALOHA limitations</a> explains why atmospheric dispersion results depend on source and weather assumptions. <a href="https://www.cdc.gov/niosh/npg/" target="_blank" rel="noreferrer">CDC/NIOSH Pocket Guide</a> provides substance-specific hazards and exposure guidance. <a href="https://www.epa.gov/aegl/access-acute-exposure-guideline-levels-aegls-values" target="_blank" rel="noreferrer">EPA AEGL values</a> provides public emergency exposure guidance. <a href="https://www.weather.gov/" target="_blank" rel="noreferrer">National Weather Service</a> provides observations, forecasts, warnings, and meteorological education. <a href="https://www.ready.gov/chemical" target="_blank" rel="noreferrer">Ready.gov chemical emergencies</a> provides public protective-action guidance. These references should be checked for current values and incident-specific direction.</p>
+            </article>
+        </section>
 
         <main class="left-rail">
             <section class="panel left-card situation-card">
                 <div class="panel-title">SITUATION OVERVIEW</div>
-                <div class="data-grid"><span>Chemical:</span><strong>Chlorine Leak</strong><span>Amount:</span><strong>500kg</strong><span>Time:</span><strong>12:34 PM</strong><span>Wind:</span><strong>15km/h N NE</strong></div>
+                <div class="data-grid"><span>Source:</span><strong id="source-name">Princeton Middle School</strong><span>Chemical:</span><strong id="hazard-name">Loading hazard</strong><span>Amount:</span><strong id="release-amount">Loading release</strong><span>Wind:</span><strong id="wind-summary">LIVE · refreshing 5 min</strong></div>
+                <details class="release-controls"><summary>Release &amp; gas controls</summary>
+                    <form id="release-form">
+                        <label>Gas / hazard<select id="release-hazard" aria-label="Gas or hazard"><option value="">Current hazard</option></select></label>
+                        <label>Release mode<select id="release-mode" aria-label="Release mode"><option value="CONTINUOUS">Constant leak</option><option value="IMPULSIVE">Instant release / explosion</option><option value="CONTINUOUS_THEN_IMPULSIVE">Leak then explosion</option></select></label>
+                        <div class="release-grid"><label>Leak rate (kg/s)<input id="release-rate" type="number" min="0" max="1000" step="any" value="0.00555556" required></label><label>Duration (min)<input id="release-duration" type="number" min="1" max="240" step="1" value="30" required></label><label>Burst mass (kg)<input id="release-impulse" type="number" min="0" max="100000" step="any" value="10" required></label><label>Burst at T+ (min)<input id="release-time" type="number" min="0" max="120" step="1" value="0" required></label></div>
+                        <div class="forecast-controls"><button type="submit">APPLY SIMULATION</button></div><span id="release-feedback" class="model-note">Mass and rate affect modeled concentration. Explosion represents a gas release, not blast damage.</span>
+                    </form>
+                </details>
                 <label class="command-label" for="search-input">Map search</label>
                 <div class="search-wrap">
                     <input id="search-input" type="text" placeholder="Search real places..." autocomplete="off">
@@ -203,28 +310,32 @@
             </section>
 
             <section class="panel left-card metrics-layout">
-                <div><div class="panel-title">HAZARD METRICS</div><div class="metric-list"><span>Affected Area: <strong>1.2 sq km</strong></span><span>Pop. At Risk: <strong>2,341</strong></span><span>Peak Conc.: <strong>54 ppm</strong></span></div></div>
-                <div class="legend"><div><b class="red">Red</b><span>Gast Leak</span></div><div><b class="yellow">Yellow</b><span>54 ppm</span></div><div><b class="cyan">Peak Conc.</b><span>8 ppm</span></div></div>
+                <div><div class="panel-title">HAZARD METRICS</div><div class="metric-list"><span>Affected Area: <strong id="affected-area">— sq km</strong></span><span>Pop. At Risk: <strong id="population-at-risk">—</strong></span><span>Peak Conc.: <strong id="peak-concentration">— ppm</strong></span></div></div>
+                <div class="legend"><div><b class="red">IDLH</b><span id="legend-red-value">Loading</span></div><div><b class="yellow">PEL</b><span id="legend-yellow-value">Loading</span></div><div><b class="cyan">TRACE</b><span id="legend-blue-value">Loading</span></div></div>
             </section>
 
-            <section class="panel left-card"><div class="panel-title">EMERGENCY ACTION PLAN</div><div class="action-list"><button class="landmark-btn" data-lng="-74.6593" data-lat="40.3573" data-zoom="14" data-name="Shelter in place">1. SHELTER IN PLACE (500m)</button><button>2. SECURE HVAC INTAKES</button><button>3. EVACUATE SOUTH-WEST</button></div></section>
+            <section class="panel left-card"><div class="panel-title">SIMULATION / NOT FIELD GUIDANCE</div><div class="model-note">Estimated transport, not a validated emergency forecast. Colors use hazard thresholds; sphere sizes are enlarged for visibility. Population estimates require population data. Follow qualified responders and official alerts.</div></section>
         </main>
 
-        <div class="map-tools">
-            <button id="btn-streets">↗</button><button id="btn-open-loader">⌁</button>
-            <button class="landmark-btn" data-lng="9.2561" data-lat="46.0058" data-zoom="13" data-name="Lake Como, Italy">A</button>
-            <button class="landmark-btn" data-lng="86.9250" data-lat="27.9881" data-zoom="12" data-name="Mount Everest">⌁</button>
+        
+        <div class="map-tools" aria-label="Map controls">
+            <button id="btn-streets" type="button" aria-pressed="true" title="Satellite imagery is unavailable until a provider is configured">STREET · SAT N/A</button>
+            <button id="btn-open-loader" type="button" title="Open manual coordinate loader">⌁ LOAD</button>
+            <button id="btn-clear-snap" type="button" title="Clear the current location snap and marker">CLEAR SNAP</button>
         </div>
 
         <aside class="right-rail">
-            <section class="panel right-card timeline-card"><div class="panel-title"><span>TIMELINE SCRUBBER</span></div><div class="timeline-labels"><span>T+0</span><span>T+30</span><span>T+60 [Current, 1:19 PM]</span></div><div class="scrubber"></div><span class="panel-subtitle">T+120 mins</span></section>
-            <section class="panel right-card"><div class="panel-title">FIELD CONTEXT</div><div class="context-lines"><span>♧ OSRM Routes</span><span>Weather: Cloudy, 18°C</span><span>☁ Humidity 65%</span><span>● Stable</span></div></section>
-            <section class="panel right-card log-card"><div class="panel-title">SYSTEM LOGS</div><div class="log-lines"><span>ElevenLabs</span><span>Voice dispatch active</span><span>Map tiles live</span><span>Terrain model ready</span></div></section>
+            <section class="panel right-card timeline-card"><div class="panel-title"><span>TIMELINE SCRUBBER</span><span id="timeline-current" class="panel-subtitle">T+30 min</span></div><div class="timeline-labels"><span>T+0</span><span>T+30</span><span>T+60</span></div><input id="timeline-slider" class="scrubber" type="range" min="0" max="120" step="5" value="30" aria-label="Plume timeline in minutes"><div class="forecast-controls"><button id="forecast-play" type="button" aria-pressed="false">▶ PLAY 2 HOURS</button><button id="forecast-restart" type="button" title="Restart forecast from T+0">↺</button><button id="forecast-video" type="button" title="Record the two-hour forecast and download a WebM video">VIDEO ↓</button></div><span id="forecast-status" class="panel-subtitle">5-minute steps · stops at T+120</span><div class="forecast-controls"><button id="view-plume" type="button" aria-pressed="true">3D CLOUD</button><button id="view-exposure" type="button" aria-pressed="false">2H EXPOSURE</button></div><div id="exposure-summary" class="model-note" hidden></div><div id="export-controls" class="forecast-controls" hidden><button id="export-csv" type="button">CSV LIST</button><button id="export-png" type="button">PNG MAP</button><button id="export-jpg" type="button">JPG MAP</button></div></section>
+            <section class="panel right-card"><div class="panel-title">FIELD CONTEXT</div><div class="context-lines"><span id="weather-context">Fetching current weather...</span><span id="weather-detail">Provider weather refreshes every five minutes.</span><span class="model-note">Terrain / building wind paths are approximate, not measured street-level winds.</span></div></section>
+            <section class="panel right-card affected-card"><div class="panel-title"><span>AFFECTED PROPERTIES</span><button id="affected-toggle" class="affected-toggle" type="button" aria-expanded="true">HIDE</button></div><div id="affected-list" class="affected-list"><span>Loading property exposure…</span></div></section>
         </aside>
 
-        <button id="ai-dispatch-orb" class="ai-dispatch-orb" type="button" aria-label="Activate AI dispatch"><span>✦</span></button>
-        <label class="dispatch-float-hint" for="search-input">Describe situation or updates...</label>
-        <div id="map-badge" class="map-badge">NNE 15 km/h ↗</div>
+        <button id="ai-dispatch-orb" class="ai-dispatch-orb" type="button" aria-label="Start voice dispatch" title="Voice dispatch"></button>
+        <button id="dispatch-chat-toggle" class="dispatch-chat-toggle" type="button" aria-label="Open dispatch message" aria-expanded="false" title="Open dispatch message"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h16v12H9l-5 4V4Z"/><path d="M8 8h8M8 12h5"/></svg></button>
+        <input id="dispatch-input" class="dispatch-input hidden" aria-label="Describe situation or updates" placeholder="Describe the incident or deploy a team…">
+        <section id="dispatch-examples" class="dispatch-examples" hidden><strong>EXAMPLE COMMANDS</strong><button type="button" data-command="The gas pipe just exploded">The gas pipe just exploded</button><button type="button" data-command="Set total release to 25 kg">Set total release to 25 kg</button><button type="button" data-command="Deploy Hazmat 1 to source">Deploy Hazmat 1 to source</button><button type="button" data-command="Deploy Engine 4 at 40.361, -74.655">Deploy Engine 4 at coordinates</button><button type="button" data-command="Assign [property name] to Hazmat 1">Assign a home to Hazmat 1</button><small>Street intersections need a city and a confirmed map position. Explosion mass must be specified or configured; no mass is guessed.</small><p id="dispatch-response" role="status"></p></section>
+        <span id="plume-mode" class="sr-only">3D plume</span>
+        <div id="map-badge" class="map-badge" title="Arrow shows transport direction; compass label is wind FROM"><span id="wind-label">Fetching wind</span><span id="wind-arrow" aria-hidden="true">↑</span></div>
         <div id="toast" class="opacity-0 transition-opacity duration-300"><span id="toast-text">Initializing 3D Elevation Terrain...</span></div>
         <div class="bottom-status">HOLD RIGHT MOUSE BUTTON / CTRL + DRAG TO TILT MOUNTAINS &amp; 3D BUILDINGS</div>
     </div>
@@ -261,231 +372,8 @@
         </div>
     </div>
 
-    <script>
-        let map;
-        let currentMarker = null;
-
-        // Global DEM Terrain Source Configuration (Terrarium Encoding)
-        const PRINCETON_HIGH_SCHOOL = [-74.6593, 40.3573];
-        const TERRAIN_DISABLE_ZOOM = 13;
-        const terrainSourceConfig = {
-            type: 'raster-dem',
-            tiles: [
-                'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'
-            ],
-            encoding: 'terrarium',
-            tileSize: 256,
-            maxzoom: TERRAIN_DISABLE_ZOOM
-        };
-
-        async function initMap() {
-            try {
-                // Fetch Liberty Style from OpenFreeMap
-                const res = await fetch('https://tiles.openfreemap.org/styles/liberty');
-                const styleJson = await res.json();
-
-                // Inject 3D DEM terrain into the style
-                if (!styleJson.sources) styleJson.sources = {};
-                styleJson.sources['terrain-source'] = terrainSourceConfig;
-                // Start without DEM terrain at the default close-up view. It is added only
-                // when the user zooms out to the overview scale, avoiding unnecessary tile work.
-                delete styleJson.terrain;
-
-                map = new maplibregl.Map({
-                    container: 'map',
-                    style: styleJson,
-                    center: PRINCETON_HIGH_SCHOOL,
-                    zoom: 14,
-                    pitch: 55,
-                    bearing: -20,
-                    attributionControl: false,
-                    maxTileCacheSize: 128,
-                    fadeDuration: 0,
-                    refreshExpiredTiles: false,
-                    transformRequest: (url) => ({ url })
-                });
-
-                // Stop requesting DEM data once the view is zoomed in past the useful terrain scale.
-                map.on('zoom', () => {
-                    const terrainEnabled = map.getZoom() <= TERRAIN_DISABLE_ZOOM;
-                    if (terrainEnabled && !map.getTerrain()) {
-                        map.setTerrain({ source: 'terrain-source', exaggeration: 1.8 });
-                    } else if (!terrainEnabled && map.getTerrain()) {
-                        map.setTerrain(null);
-                    }
-                });
-
-                map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
-
-                map.on('load', () => {
-                    showToast("Princeton High School map ready. Terrain loads at overview zoom.");
-                });
-
-                setupSearchEngine();
-                setupEventListeners();
-            } catch (err) {
-                console.error("Error initializing MapLibre map:", err);
-                showToast("Error loading map engine.");
-            }
-        }
-
-        function flyToLocation(lng, lat, zoom = 14, name = "Location") {
-            try {
-                const numericLng = Number(lng);
-                const numericLat = Number(lat);
-
-                map.flyTo({
-                    center: [numericLng, numericLat],
-                    zoom: zoom,
-                    pitch: 65,
-                    bearing: -20,
-                    duration: 2500
-                });
-
-                if (currentMarker) currentMarker.remove();
-
-                const el = document.createElement('div');
-                el.className = 'w-6 h-6 bg-blue-600 border-2 border-white rounded-full shadow-2xl flex items-center justify-center animate-bounce';
-                
-                currentMarker = new maplibregl.Marker({ element: el })
-                    .setLngLat([numericLng, numericLat])
-                    .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML(`<div style="color:#000; font-weight:600; font-size:12px;">${name}</div>`))
-                    .addTo(map);
-
-                showToast("Flying to: " + name);
-            } catch (err) {
-                console.error("Error flying to coordinates:", err);
-            }
-        }
-
-        function addManualMarker() {
-            try {
-                const nameInput = document.getElementById('manual-name');
-                const lngInput = document.getElementById('manual-lng');
-                const latInput = document.getElementById('manual-lat');
-
-                const name = nameInput ? nameInput.value : "Custom Location";
-                const lng = parseFloat(lngInput ? lngInput.value : 0);
-                const lat = parseFloat(latInput ? latInput.value : 0);
-
-                if (isNaN(lng) || isNaN(lat)) {
-                    showToast("Please enter valid numeric latitude and longitude coordinates.");
-                    return;
-                }
-
-                flyToLocation(lng, lat, 14, name);
-
-                const modal = document.getElementById('loader-modal');
-                if (modal) modal.classList.add('hidden');
-                showToast("Added custom pin: " + name);
-            } catch (err) {
-                console.error("Error adding manual marker:", err);
-            }
-        }
-
-        function setupSearchEngine() {
-            const searchInput = document.getElementById('search-input');
-            const searchResults = document.getElementById('search-results');
-            if (!searchInput || !searchResults) return;
-
-            let searchTimeout;
-
-            searchInput.addEventListener('input', (e) => {
-                const query = e.target.value.trim();
-                clearTimeout(searchTimeout);
-                if (!query) {
-                    searchResults.classList.add('hidden');
-                    return;
-                }
-
-                searchTimeout = setTimeout(async () => {
-                    try {
-                        const response = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query));
-                        const data = await response.json();
-                        searchResults.innerHTML = '';
-
-                        if (!data || data.length === 0) {
-                            searchResults.innerHTML = '<div class="p-3 text-xs text-slate-400">No real locations found</div>';
-                        } else {
-                            data.slice(0, 5).forEach(place => {
-                                const div = document.createElement('div');
-                                div.className = 'p-3 hover:bg-slate-800 cursor-pointer transition-all flex flex-col';
-                                div.innerHTML = '<span class="font-semibold text-sm text-white">' + place.display_name + '</span><span class="text-xs text-slate-400">Lat: ' + place.lat + ', Lng: ' + place.lon + '</span>';
-                                div.onclick = () => {
-                                    const lon = parseFloat(place.lon);
-                                    const lat = parseFloat(place.lat);
-                                    const placeName = place.display_name.split(',')[0];
-                                    
-                                    flyToLocation(lon, lat, 14, placeName);
-
-                                    searchResults.classList.add('hidden');
-                                    searchInput.value = place.display_name;
-                                };
-                                searchResults.appendChild(div);
-                            });
-                        }
-                        searchResults.classList.remove('hidden');
-                    } catch (err) {
-                        console.warn("Geocoding network error", err);
-                    }
-                }, 400);
-            });
-
-            document.addEventListener('click', (e) => {
-                if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-                    searchResults.classList.add('hidden');
-                }
-            });
-        }
-
-        function setupEventListeners() {
-            const btnOpenLoader = document.getElementById('btn-open-loader');
-            const loaderModal = document.getElementById('loader-modal');
-            if (btnOpenLoader && loaderModal) {
-                btnOpenLoader.addEventListener('click', () => loaderModal.classList.remove('hidden'));
-            }
-
-            const btnCloseLoader = document.getElementById('btn-close-loader');
-            if (btnCloseLoader && loaderModal) {
-                btnCloseLoader.addEventListener('click', () => loaderModal.classList.add('hidden'));
-            }
-
-            const btnCancelLoader = document.getElementById('btn-cancel-loader');
-            if (btnCancelLoader && loaderModal) {
-                btnCancelLoader.addEventListener('click', () => loaderModal.classList.add('hidden'));
-            }
-
-            const btnSubmitLoader = document.getElementById('btn-submit-loader');
-            if (btnSubmitLoader) {
-                btnSubmitLoader.addEventListener('click', addManualMarker);
-            }
-
-            document.querySelectorAll('.landmark-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const lng = parseFloat(btn.getAttribute('data-lng'));
-                    const lat = parseFloat(btn.getAttribute('data-lat'));
-                    const zoom = parseInt(btn.getAttribute('data-zoom') || 14);
-                    const name = btn.getAttribute('data-name');
-                    flyToLocation(lng, lat, zoom, name);
-                });
-            });
-        }
-
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            const toastText = document.getElementById('toast-text');
-            if (!toast || !toastText) return;
-
-            toastText.innerText = message;
-            toast.classList.remove('opacity-0');
-            setTimeout(() => {
-                toast.classList.add('opacity-0');
-            }, 3500);
-        }
-
-        window.onload = function() {
-            initMap();
-        };
-    </script>
+    <script type="module" src="/src/aiDispatch.ts"></script>
+    <script type="module" src="/src/main.js"></script>
+    
 </body>
 </html>
